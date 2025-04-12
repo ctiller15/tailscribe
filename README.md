@@ -6,6 +6,7 @@
 
 ### Quickstart
 ```bash
+cp .env.example .env
 go run main.go
 ```
 
@@ -15,9 +16,10 @@ go run main.go
 ```bash
 # macos m1+
 docker buildx build --platform linux/amd64 -t tailscribe .
-docker run -p 8080:8080 tailscribe
 
 # linux
 docker build -t tailscribe .
-docker run -p 8080:8080 tailscribe
+
+# run
+docker run --env-file=.env -p 8080:8080 tailscribe
 ```
