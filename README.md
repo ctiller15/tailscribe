@@ -4,6 +4,11 @@
 
 ## Running the project
 
+### Quickstart
+```bash
+go run main.go
+```
+
 ### Running the container
 (Requires Docker)
 
