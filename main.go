@@ -1,38 +1,18 @@
 package main
 
 import (
-	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/ctiller15/tailscribe/server/handlers"
 )
-
-type IndexPageData struct {
-	Title string
-}
-
-func handleIndex(w http.ResponseWriter, r *http.Request) {
-
-	tmpl := template.Must(template.ParseFiles(
-		"./templates/index.html",
-		"./templates/base.html",
-	))
-
-	data := IndexPageData{
-		Title: "TailScribe",
-	}
-
-	err := tmpl.Execute(w, data)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 func main() {
 	addr := ":8080"
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /", handleIndex)
+	mux.HandleFunc("GET /", handlers.HandleIndex)
 
 	server := http.Server{
 		Handler: mux,
