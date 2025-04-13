@@ -23,3 +23,12 @@ func TestGetIndex(t *testing.T) {
 
 	assert.Equal(t, response.Result().StatusCode, 200)
 }
+
+func TestGetAttributions(t *testing.T) {
+	request, _ := http.NewRequest(http.MethodGet, "/attributions", nil)
+	response := httptest.NewRecorder()
+
+	HandleAttributions(response, request)
+
+	assert.Equal(t, response.Result().StatusCode, 200)
+}

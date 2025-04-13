@@ -10,6 +10,11 @@ cp .env.example .env
 go run main.go
 ```
 
+### Running the tests
+```bash
+go test ./...
+```
+
 ### Running the container
 (Requires Docker)
 

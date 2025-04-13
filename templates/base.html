@@ -15,12 +15,35 @@
             href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
         <link
             rel="stylesheet"
-            href="http://localhost:8080/static/css/styles.css" />
+            href="/static/css/styles.css" />
         <script 
             defer 
             src="https://code.getmdl.io/1.3.0/material.min.js"></script>
     </head>
     <body>
+        <section class="app">
+{{ end }}
+
+{{ define "navbar" }}
+<div class="navbar-container">
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+        <header class="mdl-layout__header navbar">
+            <div class="mdl-layout__header-row">
+                <div>
+                    <a href="/">
+                        <img
+                            class="app-logo"
+                            src="/static/images/logo.png"
+                            alt="home"
+                            width="160px"
+                            height="37px"
+                        />
+                    </a>
+                </div>
+            </div>
+        </header>
+    </div>
+</div>
 {{ end }}
 
 {{ define "bottom" }}
@@ -30,9 +53,13 @@
             <input class="mdl-mega-footer__heading-checkbox" type="checkbox" checked>
             <h1 class="mdl-mega-footer__heading">Details</h1>
             <ul class="mdl-mega-footer__link-list">
-                <li><a href="#">User Guides</a></li>
-                <li><a href="#">Attributions</a></li>
-                <li><a href="#">Github</a></li>
+                <li><a 
+                    target="_blank"
+                    href="https://docs.tailscribe.com/">User Guides</a></li>
+                <li><a href="/attributions">Attributions</a></li>
+                <li><a
+                    target="_blank" 
+                    href="https://github.com/ctiller15/tailscribe">Github</a></li>
             </ul>
         </div>
     
@@ -53,6 +80,7 @@
         </ul>
     </div>
 </footer>
+</section>
 </body>
 </html>
 {{ end }}

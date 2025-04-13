@@ -21,8 +21,10 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", handlers.HandleIndex)
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	mux.HandleFunc("/", handlers.HandleIndex)
+	mux.HandleFunc("/attributions", handlers.HandleAttributions)
 
 	server := http.Server{
 		Handler: mux,
