@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/ctiller15/tailscribe/server/handlers"
 	"github.com/joho/godotenv"
@@ -27,8 +28,9 @@ func main() {
 	mux.HandleFunc("/attributions", handlers.HandleAttributions)
 
 	server := http.Server{
-		Handler: mux,
-		Addr:    addr,
+		Handler:           mux,
+		Addr:              addr,
+		ReadHeaderTimeout: 2 * time.Second,
 	}
 
 	log.Println("listening on", addr)
