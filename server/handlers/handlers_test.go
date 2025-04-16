@@ -32,3 +32,12 @@ func TestGetAttributions(t *testing.T) {
 
 	assert.Equal(t, response.Result().StatusCode, 200)
 }
+
+func TestGetTerms(t *testing.T) {
+	request, _ := http.NewRequest(http.MethodGet, "/terms", nil)
+	response := httptest.NewRecorder()
+
+	HandleTerms(response, request)
+
+	assert.Equal(t, response.Result().StatusCode, 200)
+}

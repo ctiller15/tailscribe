@@ -15,6 +15,10 @@ type AttributionsPageData struct {
 	Title string
 }
 
+type TermsAndConditionsPageData struct {
+	Title string
+}
+
 func HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles(
@@ -40,6 +44,22 @@ func HandleAttributions(w http.ResponseWriter, r *http.Request) {
 
 	data := AttributionsPageData{
 		Title: "Attributions",
+	}
+
+	err := tmpl.Execute(w, data)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func HandleTerms(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles(
+		"./templates/terms_and_conditions.html",
+		"./templates/base.html",
+	))
+
+	data := TermsAndConditionsPageData{
+		Title: "Terms and Conditions",
 	}
 
 	err := tmpl.Execute(w, data)

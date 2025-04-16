@@ -26,6 +26,7 @@ func main() {
 
 	mux.HandleFunc("/", handlers.HandleIndex)
 	mux.HandleFunc("/attributions", handlers.HandleAttributions)
+	mux.HandleFunc("/terms", handlers.HandleTerms)
 
 	server := http.Server{
 		Handler:           mux,

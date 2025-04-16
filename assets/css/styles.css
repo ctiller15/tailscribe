@@ -46,6 +46,13 @@
     color: #f7f7f7;
 }
 
+.terms-and-conditions {
+    overflow-wrap: 'break-word';
+    margin: 1em;
+    padding: 1em;
+    text-align: left;
+}
+
 /* Style overrides */
 .mdl-layout__header-row {
     padding: 0 24px;
