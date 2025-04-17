@@ -3,10 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/ctiller15/tailscribe/server/handlers"
+	"github.com/ctiller15/tailscribe/internal/api"
 	"github.com/joho/godotenv"
 )
 
@@ -16,7 +15,8 @@ func main() {
 		log.Printf("error loading .env file: %v.\n Proceeding without env file...", err)
 	}
 
-	addr := os.Getenv("PORT")
+	envVars := api.NewEnvVars()
+	apiCfg := api.NewAPIConfig(envVars)
 
 	fs := http.FileServer(http.Dir("assets/"))
 
@@ -24,17 +24,18 @@ func main() {
 
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	mux.HandleFunc("/", handlers.HandleIndex)
-	mux.HandleFunc("/attributions", handlers.HandleAttributions)
-	mux.HandleFunc("/terms", handlers.HandleTerms)
+	mux.HandleFunc("/", apiCfg.HandleIndex)
+	mux.HandleFunc("/attributions", apiCfg.HandleAttributions)
+	mux.HandleFunc("/terms", apiCfg.HandleTerms)
+	mux.HandleFunc("/privacy", apiCfg.HandlePrivacyPolicy)
 
 	server := http.Server{
 		Handler:           mux,
-		Addr:              addr,
+		Addr:              envVars.Addr,
 		ReadHeaderTimeout: 2 * time.Second,
 	}
 
-	log.Println("listening on", addr)
+	log.Println("listening on", envVars.Addr)
 
 	err = server.ListenAndServe()
 	if err != nil {

@@ -46,7 +46,7 @@
     color: #f7f7f7;
 }
 
-.terms-and-conditions {
+.terms-and-conditions, .privacy-policy {
     overflow-wrap: 'break-word';
     margin: 1em;
     padding: 1em;

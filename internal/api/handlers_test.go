@@ -1,4 +1,4 @@
-package handlers
+package api
 
 import (
 	"net/http"
@@ -18,8 +18,8 @@ func init() {
 func TestGetIndex(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/", nil)
 	response := httptest.NewRecorder()
-
-	HandleIndex(response, request)
+	apiCfg := NewAPIConfig(NewEnvVars())
+	apiCfg.HandleIndex(response, request)
 
 	assert.Equal(t, response.Result().StatusCode, 200)
 }
@@ -28,7 +28,8 @@ func TestGetAttributions(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/attributions", nil)
 	response := httptest.NewRecorder()
 
-	HandleAttributions(response, request)
+	apiCfg := NewAPIConfig(NewEnvVars())
+	apiCfg.HandleAttributions(response, request)
 
 	assert.Equal(t, response.Result().StatusCode, 200)
 }
@@ -37,7 +38,18 @@ func TestGetTerms(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/terms", nil)
 	response := httptest.NewRecorder()
 
-	HandleTerms(response, request)
+	apiCfg := NewAPIConfig(NewEnvVars())
+	apiCfg.HandleTerms(response, request)
+
+	assert.Equal(t, response.Result().StatusCode, 200)
+}
+
+func TestGetPrivacyPolicy(t *testing.T) {
+	request, _ := http.NewRequest(http.MethodGet, "/privacy", nil)
+	response := httptest.NewRecorder()
+
+	apiCfg := NewAPIConfig(NewEnvVars())
+	apiCfg.HandlePrivacyPolicy(response, request)
 
 	assert.Equal(t, response.Result().StatusCode, 200)
 }

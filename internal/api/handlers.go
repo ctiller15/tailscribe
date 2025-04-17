@@ -1,4 +1,4 @@
-package handlers
+package api
 
 import (
 	"html/template"
@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-// May be an easy interface. Every single page should have a title.
+// Probably some sort of abstraction here. I'll figure it out eventually.
 type IndexPageData struct {
 	Title string
 }
@@ -19,7 +19,12 @@ type TermsAndConditionsPageData struct {
 	Title string
 }
 
-func HandleIndex(w http.ResponseWriter, r *http.Request) {
+type PrivacyPolicyPageData struct {
+	Title        string
+	ContactEmail string
+}
+
+func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles(
 		"./templates/index.html",
@@ -36,7 +41,7 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleAttributions(w http.ResponseWriter, r *http.Request) {
+func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(
 		"./templates/attributions.html",
 		"./templates/base.html",
@@ -52,7 +57,7 @@ func HandleAttributions(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleTerms(w http.ResponseWriter, r *http.Request) {
+func (a *APIConfig) HandleTerms(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(
 		"./templates/terms_and_conditions.html",
 		"./templates/base.html",
@@ -60,6 +65,23 @@ func HandleTerms(w http.ResponseWriter, r *http.Request) {
 
 	data := TermsAndConditionsPageData{
 		Title: "Terms and Conditions",
+	}
+
+	err := tmpl.Execute(w, data)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (a *APIConfig) HandlePrivacyPolicy(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles(
+		"./templates/privacy_policy.html",
+		"./templates/base.html",
+	))
+
+	data := PrivacyPolicyPageData{
+		Title:        "Privacy Policy",
+		ContactEmail: a.Env.ContactEmail,
 	}
 
 	err := tmpl.Execute(w, data)
