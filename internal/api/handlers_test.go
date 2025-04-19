@@ -53,3 +53,13 @@ func TestGetPrivacyPolicy(t *testing.T) {
 
 	assert.Equal(t, response.Result().StatusCode, 200)
 }
+
+func TestGetContactUs(t *testing.T) {
+	request, _ := http.NewRequest(http.MethodGet, "/contact", nil)
+	response := httptest.NewRecorder()
+
+	apiCfg := NewAPIConfig(NewEnvVars())
+	apiCfg.HandleContactUs(response, request)
+
+	assert.Equal(t, response.Result().StatusCode, 200)
+}

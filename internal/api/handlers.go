@@ -24,6 +24,11 @@ type PrivacyPolicyPageData struct {
 	ContactEmail string
 }
 
+type ContactUsPageData struct {
+	Title        string
+	ContactEmail string
+}
+
 func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles(
@@ -52,6 +57,7 @@ func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := tmpl.Execute(w, data)
+	// Instead of a log fatal, probably a generic 500 page.
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,6 +87,23 @@ func (a *APIConfig) HandlePrivacyPolicy(w http.ResponseWriter, r *http.Request) 
 
 	data := PrivacyPolicyPageData{
 		Title:        "Privacy Policy",
+		ContactEmail: a.Env.ContactEmail,
+	}
+
+	err := tmpl.Execute(w, data)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (a *APIConfig) HandleContactUs(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles(
+		"./templates/contact_us.html",
+		"./templates/base.html",
+	))
+
+	data := ContactUsPageData{
+		Title:        "Contact Us",
 		ContactEmail: a.Env.ContactEmail,
 	}
 
