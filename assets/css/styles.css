@@ -53,6 +53,14 @@
     text-align: left;
 }
 
+.contact-us {
+    padding: 1em;
+}
+
+.contact-us>h1,h2 {
+    text-align: center;
+}
+
 /* Style overrides */
 .mdl-layout__header-row {
     padding: 0 24px;

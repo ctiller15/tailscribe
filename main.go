@@ -28,6 +28,7 @@ func main() {
 	mux.HandleFunc("/attributions", apiCfg.HandleAttributions)
 	mux.HandleFunc("/terms", apiCfg.HandleTerms)
 	mux.HandleFunc("/privacy", apiCfg.HandlePrivacyPolicy)
+	mux.HandleFunc("/contact", apiCfg.HandleContactUs)
 
 	server := http.Server{
 		Handler:           mux,
