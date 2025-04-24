@@ -24,6 +24,24 @@ func TestGetIndex(t *testing.T) {
 	assert.Equal(t, response.Result().StatusCode, 200)
 }
 
+func TestGetSignup(t *testing.T) {
+	request, _ := http.NewRequest(http.MethodGet, "/signup", nil)
+	response := httptest.NewRecorder()
+	apiCfg := NewAPIConfig(NewEnvVars())
+	apiCfg.HandleSignupPage(response, request)
+
+	assert.Equal(t, response.Result().StatusCode, 200)
+}
+
+func TestHandlePostSignup(t *testing.T) {
+	request, _ := http.NewRequest(http.MethodPost, "/signup", nil)
+	response := httptest.NewRecorder()
+	apiCfg := NewAPIConfig(NewEnvVars())
+	apiCfg.HandlePostSignup(response, request)
+
+	assert.Equal(t, response.Result().StatusCode, 200)
+}
+
 func TestGetAttributions(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/attributions", nil)
 	response := httptest.NewRecorder()

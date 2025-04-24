@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -44,6 +45,43 @@ func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (a *APIConfig) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
+
+	tmpl := template.Must(template.ParseFiles(
+		"./templates/signup.html",
+		"./templates/base.html",
+	))
+
+	data := IndexPageData{
+		Title: "TailScribe - Sign Up",
+	}
+
+	err := tmpl.Execute(w, data)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+type SignupDetails struct {
+	Email    string
+	Password string
+}
+
+func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Posting!")
+	signupDetails := SignupDetails{
+		Email:    r.FormValue("email"),
+		Password: r.FormValue("password"),
+	}
+
+	fmt.Println(signupDetails)
+
+	// Validate email.
+
+	// Hash password.
+	// Store both.
 }
 
 func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {

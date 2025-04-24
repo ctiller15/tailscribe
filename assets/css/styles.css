@@ -4,7 +4,8 @@
     min-height: 100vh;
     text-align: left;
     background-color: #ffffff;
-    background-image: url('../svg/tiled_background.svg')
+    background-image: url('../svg/tiled_background.svg');
+    color: #1B422A;
 }
 
 .navbar-container {
@@ -59,6 +60,17 @@
 
 .contact-us>h1,h2 {
     text-align: center;
+}
+
+.right-nav-links-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.right-nav-links-container a {
+    color: inherit;
+    padding: 8px;
+    text-decoration: none;
 }
 
 /* Style overrides */

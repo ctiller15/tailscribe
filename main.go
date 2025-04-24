@@ -25,6 +25,8 @@ func main() {
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	mux.HandleFunc("/", apiCfg.HandleIndex)
+	mux.HandleFunc("GET /signup", apiCfg.HandleSignupPage)
+	mux.HandleFunc("POST /signup", apiCfg.HandlePostSignup)
 	mux.HandleFunc("/attributions", apiCfg.HandleAttributions)
 	mux.HandleFunc("/terms", apiCfg.HandleTerms)
 	mux.HandleFunc("/privacy", apiCfg.HandlePrivacyPolicy)
