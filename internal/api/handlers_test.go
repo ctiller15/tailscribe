@@ -3,7 +3,9 @@ package api
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,12 +36,36 @@ func TestGetSignup(t *testing.T) {
 }
 
 func TestHandlePostSignup(t *testing.T) {
-	request, _ := http.NewRequest(http.MethodPost, "/signup", nil)
-	response := httptest.NewRecorder()
-	apiCfg := NewAPIConfig(NewEnvVars())
-	apiCfg.HandlePostSignup(response, request)
+	t.Run("Happy path", func(t *testing.T) {
+		formData := url.Values{
+			"email":    {"invalidEmail@email.com"},
+			"password": {"password123"},
+		}
 
-	assert.Equal(t, response.Result().StatusCode, 200)
+		request, _ := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(formData.Encode()))
+		request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		response := httptest.NewRecorder()
+		apiCfg := NewAPIConfig(NewEnvVars())
+		apiCfg.HandlePostSignup(response, request)
+
+		assert.Equal(t, response.Result().StatusCode, 200)
+		t.Errorf("Finish the test!")
+	})
+
+	t.Run("Invalid email", func(t *testing.T) {
+		formData := url.Values{
+			"email":    {"invalidEmail"},
+			"password": {"password123"},
+		}
+
+		request, _ := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(formData.Encode()))
+		request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		response := httptest.NewRecorder()
+		apiCfg := NewAPIConfig(NewEnvVars())
+		apiCfg.HandlePostSignup(response, request)
+
+		assert.Equal(t, response.Result().StatusCode, 400)
+	})
 }
 
 func TestGetAttributions(t *testing.T) {

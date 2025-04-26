@@ -4,9 +4,20 @@
 
 ## Running the project
 
+### Installations
+- [sqlc](https://docs.sqlc.dev/en/stable/overview/install.html)
+- [docker desktop](https://docs.docker.com/desktop/)
+- [Golang 1.24+](https://go.dev/doc/install)
+
 ### Quickstart
 ```bash
+# copy env files
 cp .env.example .env
+
+# start the database
+docker-compose up -d
+
+# start server
 go run main.go
 ```
 

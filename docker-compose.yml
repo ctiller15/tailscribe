@@ -1,0 +1,36 @@
+version: "3"
+services:
+  animal-training-journal-db:
+    image: postgres:13.2
+    container_name: animal_training_journal_db_local
+    user: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=animal_training_journal
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  animal-training-journal-test-db:
+    image: postgres:13.2
+    container_name: animal_training_journal_db_test
+    user: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=animal_training_journal_test
+    ports:
+      - 6432:5432
+  animal-training-journal-e2e-db-local:
+    image: postgres:13.2
+    container_name: animal_training_journal__e2e_db_test_local
+    user: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=animal_training_journal_test_e2e
+    ports:
+      - 7432:5432 
+volumes:
+  postgres_data:

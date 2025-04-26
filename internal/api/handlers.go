@@ -5,11 +5,17 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/mail"
 )
 
 // Probably some sort of abstraction here. I'll figure it out eventually.
 type IndexPageData struct {
 	Title string
+}
+
+type SignupPageData struct {
+	Title string
+	SignupDetails
 }
 
 type AttributionsPageData struct {
@@ -67,6 +73,7 @@ func (a *APIConfig) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
 type SignupDetails struct {
 	Email    string
 	Password string
+	Valid    bool
 }
 
 func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
@@ -76,9 +83,29 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		Password: r.FormValue("password"),
 	}
 
-	fmt.Println(signupDetails)
+	data := SignupPageData{
+		Title:         "TailScribe - Sign Up",
+		SignupDetails: signupDetails,
+	}
+
+	tmpl := template.Must(template.ParseFiles(
+		"./templates/signup.html",
+		"./templates/base.html",
+	))
+
+	fmt.Println(data)
 
 	// Validate email.
+	_, err := mail.ParseAddress(signupDetails.Email)
+	if err != nil {
+		signupDetails.Valid = false
+		w.WriteHeader(http.StatusBadRequest)
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 
 	// Hash password.
 	// Store both.
