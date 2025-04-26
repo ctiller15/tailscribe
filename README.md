@@ -26,6 +26,11 @@ go run main.go
 go test ./...
 ```
 
+### connecting to the db manually
+```bash
+psql -U postgres -h localhost
+```
+
 ### Running the container
 (Requires Docker)
 
