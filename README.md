@@ -31,6 +31,11 @@ go test ./...
 psql -U postgres -h localhost
 ```
 
+### running goose migrations
+```bash
+
+```
+
 ### Running the container
 (Requires Docker)
 

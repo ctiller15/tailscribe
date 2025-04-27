@@ -1,11 +1,14 @@
 package api
 
 import (
-	"fmt"
+	"database/sql"
 	"html/template"
 	"log"
 	"net/http"
 	"net/mail"
+
+	"github.com/ctiller15/tailscribe/internal/auth"
+	"github.com/ctiller15/tailscribe/internal/database"
 )
 
 // Probably some sort of abstraction here. I'll figure it out eventually.
@@ -77,7 +80,7 @@ type SignupDetails struct {
 }
 
 func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Posting!")
+	ctx := r.Context()
 	signupDetails := SignupDetails{
 		Email:    r.FormValue("email"),
 		Password: r.FormValue("password"),
@@ -93,11 +96,10 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		"./templates/base.html",
 	))
 
-	fmt.Println(data)
-
 	// Validate email.
 	_, err := mail.ParseAddress(signupDetails.Email)
 	if err != nil {
+		// Abstract this failure state into a function
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
 		err = tmpl.Execute(w, data)
@@ -108,7 +110,41 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Hash password.
+	hashedPassword, err := auth.HashPassword(signupDetails.Password)
+	if err != nil {
+		signupDetails.Valid = false
+		w.WriteHeader(http.StatusBadRequest)
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
 	// Store both.
+	createUserParams := database.CreateUserParams{
+		Email: sql.NullString{
+			String: signupDetails.Email,
+			Valid:  true,
+		},
+		Password: sql.NullString{
+			String: hashedPassword,
+			Valid:  true,
+		},
+	}
+
+	user, err := a.Db.CreateUser(ctx, createUserParams)
+	if err != nil {
+		signupDetails.Valid = false
+		w.WriteHeader(http.StatusBadRequest)
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	// send to dashboard page.
 }
 
 func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {

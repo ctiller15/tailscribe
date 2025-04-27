@@ -1,23 +1,36 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/ctiller15/tailscribe/internal/api"
+	"github.com/ctiller15/tailscribe/internal/database"
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Initialize environment
 	err := godotenv.Load()
 	if err != nil {
 		log.Printf("error loading .env file: %v.\n Proceeding without env file...", err)
 	}
 
 	envVars := api.NewEnvVars()
-	apiCfg := api.NewAPIConfig(envVars)
+	dbUrl := envVars.Database.ConnectionString()
 
+	db, err := sql.Open("postgres", dbUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dbQueries := database.New(db)
+
+	apiCfg := api.NewAPIConfig(envVars, dbQueries)
+
+	// Initialize routing - break into own func first
 	fs := http.FileServer(http.Dir("assets/"))
 
 	mux := http.NewServeMux()
@@ -32,6 +45,7 @@ func main() {
 	mux.HandleFunc("/privacy", apiCfg.HandlePrivacyPolicy)
 	mux.HandleFunc("/contact", apiCfg.HandleContactUs)
 
+	// Start server
 	server := http.Server{
 		Handler:           mux,
 		Addr:              envVars.Addr,
