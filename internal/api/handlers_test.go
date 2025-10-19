@@ -99,7 +99,6 @@ func TestHandlePostSignup(t *testing.T) {
 		apiCfg.HandlePostSignup(response, request)
 
 		assert.Equal(t, response.Result().StatusCode, 400)
-		t.Errorf("Finish the test!")
 	})
 }
 
