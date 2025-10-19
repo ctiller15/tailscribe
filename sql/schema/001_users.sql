@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE users (
-    id INTEGER PRIMARY KEY,
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     -- Validate email in-code before sending to DB.
     email TEXT UNIQUE,
     username TEXT UNIQUE,

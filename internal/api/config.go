@@ -57,11 +57,11 @@ func NewAPIConfig(env *EnvVars, db *database.Queries) *APIConfig {
 
 // Creates the connection string for the database instance
 func (d *DatabaseEnv) ConnectionString() string {
-	return fmt.Sprintf("postgresql://%s:%s/%s?user=%s&password=%s",
+	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s",
+		d.User,
+		d.Password,
 		d.Host,
 		d.Port,
 		d.Name,
-		d.User,
-		d.Password,
 	)
 }

@@ -11,9 +11,13 @@ import (
 	"github.com/ctiller15/tailscribe/internal/database"
 )
 
+type BasePageData struct {
+	Title string
+}
+
 // Probably some sort of abstraction here. I'll figure it out eventually.
 type IndexPageData struct {
-	Title string
+	BasePageData
 }
 
 type SignupPageData struct {
@@ -39,6 +43,10 @@ type ContactUsPageData struct {
 	ContactEmail string
 }
 
+type NewPetPageData struct {
+	Title string
+}
+
 func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles(
@@ -46,7 +54,7 @@ func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 		"./templates/base.html",
 	))
 
-	data := IndexPageData{
+	data := BasePageData{
 		Title: "TailScribe",
 	}
 
@@ -63,7 +71,7 @@ func (a *APIConfig) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
 		"./templates/base.html",
 	))
 
-	data := IndexPageData{
+	data := BasePageData{
 		Title: "TailScribe - Sign Up",
 	}
 
@@ -86,7 +94,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		Password: r.FormValue("password"),
 	}
 
-	data := SignupPageData{
+	signupPageData := SignupPageData{
 		Title:         "TailScribe - Sign Up",
 		SignupDetails: signupDetails,
 	}
@@ -102,7 +110,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		// Abstract this failure state into a function
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
-		err = tmpl.Execute(w, data)
+		err = tmpl.Execute(w, signupPageData)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -114,7 +122,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
-		err = tmpl.Execute(w, data)
+		err = tmpl.Execute(w, signupPageData)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -133,18 +141,34 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	user, err := a.Db.CreateUser(ctx, createUserParams)
+	// First is user.
+	_, err = a.Db.CreateUser(ctx, createUserParams)
 	if err != nil {
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
-		err = tmpl.Execute(w, data)
+		err = tmpl.Execute(w, signupPageData)
 		if err != nil {
 			log.Fatal(err)
 		}
 		return
 	}
 
-	// send to dashboard page.
+	newPetPageData := BasePageData{
+		Title: "Add a new Pet",
+	}
+
+	// Create new template that points to new pet page.
+	tmpl = template.Must(template.ParseFiles(
+		"./templates/new_pet.html",
+		"./templates/base.html",
+	))
+
+	w.WriteHeader(http.StatusCreated)
+	err = tmpl.Execute(w, newPetPageData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
 }
 
 func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {
