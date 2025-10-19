@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"time"
 
 	"github.com/ctiller15/tailscribe/internal/auth"
 	"github.com/ctiller15/tailscribe/internal/database"
@@ -142,10 +143,32 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// First is user.
-	_, err = a.Db.CreateUser(ctx, createUserParams)
+	user, err := a.Db.CreateUser(ctx, createUserParams)
 	if err != nil {
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
+		err = tmpl.Execute(w, signupPageData)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	tokenString, err := auth.MakeJWT(user.ID, a.Env.Secret)
+	if err != nil {
+		signupDetails.Valid = false
+		w.WriteHeader(http.StatusInternalServerError)
+		err = tmpl.Execute(w, signupPageData)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	refreshTokenString, err := auth.MakeRefreshToken()
+	if err != nil {
+		signupDetails.Valid = false
+		w.WriteHeader(http.StatusInternalServerError)
 		err = tmpl.Execute(w, signupPageData)
 		if err != nil {
 			log.Fatal(err)
@@ -163,6 +186,21 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		"./templates/base.html",
 	))
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		Expires:  time.Now().Add(time.Hour * 24),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+	})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshTokenString,
+		Expires:  time.Now().Add(time.Hour * 30 * 24),
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
 	w.WriteHeader(http.StatusCreated)
 	err = tmpl.Execute(w, newPetPageData)
 	if err != nil {

@@ -19,6 +19,7 @@ type EnvVars struct {
 	Addr         string
 	ContactEmail string
 	Database     DatabaseEnv
+	Secret       string
 }
 
 func NewEnvVars() *EnvVars {
@@ -29,6 +30,7 @@ func NewEnvVars() *EnvVars {
 	dbPassword := os.Getenv("POSTGRES_PASSWORD")
 	dbHost := os.Getenv("POSTGRES_HOST")
 	dbPort := os.Getenv("POSTGRES_PORT")
+	secret := os.Getenv("SECRET")
 
 	return &EnvVars{
 		Addr:         addr,
@@ -40,6 +42,7 @@ func NewEnvVars() *EnvVars {
 			Host:     dbHost,
 			Port:     dbPort,
 		},
+		Secret: secret,
 	}
 }
 

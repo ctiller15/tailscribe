@@ -83,7 +83,13 @@ func TestHandlePostSignup(t *testing.T) {
 		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
 		apiCfg.HandlePostSignup(response, request)
 
-		assert.Equal(t, 201, response.Result().StatusCode)
+		result := response.Result()
+		assert.Equal(t, 201, result.StatusCode)
+		cookies := result.Cookies()
+		assert.NotNil(t, cookies[0])
+		assert.Equal(t, "token", cookies[0].Name)
+		assert.NotNil(t, cookies[1])
+		assert.Equal(t, "refresh_token", cookies[1].Name)
 	})
 
 	t.Run("Invalid email", func(t *testing.T) {
