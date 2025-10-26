@@ -25,7 +25,7 @@ type EnvVars struct {
 func NewEnvVars() *EnvVars {
 	addr := os.Getenv("PORT")
 	contactEmail := os.Getenv("CONTACT_EMAIL")
-	dbName := os.Getenv("POSTGRES_DATABASE")
+	dbName := os.Getenv("POSTGRES_DB")
 	dbUser := os.Getenv("POSTGRES_USER")
 	dbPassword := os.Getenv("POSTGRES_PASSWORD")
 	dbHost := os.Getenv("POSTGRES_HOST")

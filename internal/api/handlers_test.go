@@ -34,8 +34,10 @@ func init() {
 		panic(err)
 	}
 
-	if err := godotenv.Load(".env.test"); err != nil {
-		log.Fatalf("error loading .env file: %v.\n", err)
+	err := godotenv.Load(".env.test")
+
+	if err != nil {
+		log.Printf("error loading .env file: %v.\n May experience degraded behavior during tests.\n", err)
 	}
 
 	TestEnvVars = NewEnvVars()
