@@ -206,7 +206,6 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return
 }
 
 func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {
