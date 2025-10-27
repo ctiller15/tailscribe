@@ -9,6 +9,8 @@ import (
 	"github.com/ctiller15/tailscribe/internal/api"
 	"github.com/ctiller15/tailscribe/internal/database"
 	"github.com/joho/godotenv"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
