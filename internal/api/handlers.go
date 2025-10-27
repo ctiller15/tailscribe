@@ -223,7 +223,6 @@ func (a *APIConfig) HandlePostLogout(w http.ResponseWriter, r *http.Request) {
 	expireCookie(&w, "token")
 	expireCookie(&w, "refresh_token")
 
-	// Always redirect
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
