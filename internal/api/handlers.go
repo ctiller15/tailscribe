@@ -192,6 +192,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(time.Hour * 24),
 		HttpOnly: true,
 		Secure:   true,
+		Domain:   "/",
 		SameSite: http.SameSiteStrictMode,
 	})
 	http.SetCookie(w, &http.Cookie{
@@ -199,6 +200,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		Value:    refreshTokenString,
 		Expires:  time.Now().Add(time.Hour * 30 * 24),
 		HttpOnly: true,
+		Domain:   "/",
 		SameSite: http.SameSiteStrictMode,
 	})
 	w.WriteHeader(http.StatusCreated)
@@ -206,6 +208,22 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func expireCookie(w *http.ResponseWriter, cookie_name string) {
+	http.SetCookie(*w, &http.Cookie{
+		Name:     cookie_name,
+		Value:    "",
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+	})
+}
+
+func (a *APIConfig) HandlePostLogout(w http.ResponseWriter, r *http.Request) {
+	expireCookie(&w, "token")
+	expireCookie(&w, "refresh_token")
+
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
 func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {

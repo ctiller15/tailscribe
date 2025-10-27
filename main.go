@@ -9,6 +9,8 @@ import (
 	"github.com/ctiller15/tailscribe/internal/api"
 	"github.com/ctiller15/tailscribe/internal/database"
 	"github.com/joho/godotenv"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -40,6 +42,7 @@ func main() {
 	mux.HandleFunc("/", apiCfg.HandleIndex)
 	mux.HandleFunc("GET /signup", apiCfg.HandleSignupPage)
 	mux.HandleFunc("POST /signup", apiCfg.HandlePostSignup)
+	mux.HandleFunc("POST /logout", apiCfg.HandlePostLogout)
 	mux.HandleFunc("/attributions", apiCfg.HandleAttributions)
 	mux.HandleFunc("/terms", apiCfg.HandleTerms)
 	mux.HandleFunc("/privacy", apiCfg.HandlePrivacyPolicy)

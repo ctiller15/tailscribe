@@ -75,7 +75,7 @@ func TestGetSignup(t *testing.T) {
 func TestHandlePostSignup(t *testing.T) {
 	t.Run("Happy path", func(t *testing.T) {
 		formData := url.Values{
-			"email":    {"invalidEmail@email.com"},
+			"email":    {"testEmail@email.com"},
 			"password": {"password123"},
 		}
 
@@ -107,6 +107,64 @@ func TestHandlePostSignup(t *testing.T) {
 		apiCfg.HandlePostSignup(response, request)
 
 		assert.Equal(t, response.Result().StatusCode, 400)
+	})
+}
+
+func TestHandleLogout(t *testing.T) {
+	t.Run("Logs out if currently logged in", func(t *testing.T) {
+		formData := url.Values{
+			"email":    {"testEmail1@email.com"},
+			"password": {"password123"},
+		}
+
+		request, _ := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(formData.Encode()))
+		request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		response := httptest.NewRecorder()
+		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg.HandlePostSignup(response, request)
+
+		result := response.Result()
+
+		cookies := result.Cookies()
+
+		auth_cookie := *cookies[0]
+
+		logoutRequest, _ := http.NewRequest(http.MethodPost, "/logout", strings.NewReader(""))
+		logoutRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		logoutRequest.AddCookie(&auth_cookie)
+		logoutResponse := httptest.NewRecorder()
+		apiCfg.HandlePostLogout(logoutResponse, logoutRequest)
+
+		logoutResult := logoutResponse.Result()
+
+		assert.Equal(t, 307, logoutResult.StatusCode)
+		logoutCookies := logoutResult.Cookies()
+		assert.NotNil(t, logoutCookies[0])
+		assert.Equal(t, "token", logoutCookies[0].Name)
+		assert.Equal(t, "", logoutCookies[0].Value)
+
+		assert.Equal(t, "refresh_token", logoutCookies[1].Name)
+		assert.Equal(t, "", logoutCookies[1].Value)
+	})
+
+	t.Run("Successfully logs out even if not logged in", func(t *testing.T) {
+		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+
+		logoutRequest, _ := http.NewRequest(http.MethodPost, "/logout", strings.NewReader(""))
+		logoutRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		logoutResponse := httptest.NewRecorder()
+		apiCfg.HandlePostLogout(logoutResponse, logoutRequest)
+
+		logoutResult := logoutResponse.Result()
+
+		assert.Equal(t, 307, logoutResult.StatusCode)
+		logoutCookies := logoutResult.Cookies()
+		assert.NotNil(t, logoutCookies[0])
+		assert.Equal(t, "token", logoutCookies[0].Name)
+		assert.Equal(t, "", logoutCookies[0].Value)
+
+		assert.Equal(t, "refresh_token", logoutCookies[1].Name)
+		assert.Equal(t, "", logoutCookies[1].Value)
 	})
 }
 
