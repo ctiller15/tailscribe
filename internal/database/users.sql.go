@@ -57,3 +57,38 @@ func (q *Queries) DeleteUsers(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteUsers)
 	return err
 }
+
+const getUserByLoginCredentials = `-- name: GetUserByLoginCredentials :one
+SELECT id, email, username, firstname, lastname, password, facebook_id, reset_password_token, reset_password_expires, is_premium, premium_level, stripe_customer_id, is_deleted, created_at, updated_at
+FROM users
+WHERE email = $1
+AND password = $2
+`
+
+type GetUserByLoginCredentialsParams struct {
+	Email    sql.NullString
+	Password sql.NullString
+}
+
+func (q *Queries) GetUserByLoginCredentials(ctx context.Context, arg GetUserByLoginCredentialsParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByLoginCredentials, arg.Email, arg.Password)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Username,
+		&i.Firstname,
+		&i.Lastname,
+		&i.Password,
+		&i.FacebookID,
+		&i.ResetPasswordToken,
+		&i.ResetPasswordExpires,
+		&i.IsPremium,
+		&i.PremiumLevel,
+		&i.StripeCustomerID,
+		&i.IsDeleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

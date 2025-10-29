@@ -21,9 +21,30 @@ type IndexPageData struct {
 	BasePageData
 }
 
+type SignupForm struct {
+	Email    string
+	Password string
+	Valid    bool
+}
+
 type SignupPageData struct {
 	Title string
-	SignupDetails
+	SignupForm
+}
+
+type LoginForm struct {
+	Email    string
+	Password string
+	Valid    bool
+}
+
+type HtmlPageData interface {
+	SignupPageData | LoginPageData
+}
+
+type LoginPageData struct {
+	Title string
+	LoginForm
 }
 
 type AttributionsPageData struct {
@@ -82,22 +103,16 @@ func (a *APIConfig) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type SignupDetails struct {
-	Email    string
-	Password string
-	Valid    bool
-}
-
 func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	signupDetails := SignupDetails{
+	signupDetails := SignupForm{
 		Email:    r.FormValue("email"),
 		Password: r.FormValue("password"),
 	}
 
 	signupPageData := SignupPageData{
-		Title:         "TailScribe - Sign Up",
-		SignupDetails: signupDetails,
+		Title:      "TailScribe - Sign Up",
+		SignupForm: signupDetails,
 	}
 
 	tmpl := template.Must(template.ParseFiles(
@@ -217,6 +232,100 @@ func expireCookie(w *http.ResponseWriter, cookie_name string) {
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 	})
+}
+
+func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	loginDetails := LoginForm{
+		Email:    r.FormValue("email"),
+		Password: r.FormValue("password"),
+	}
+
+	loginPageData := LoginPageData{
+		Title:     "TailScribe - Log In",
+		LoginForm: loginDetails,
+	}
+
+	tmpl := template.Must(template.ParseFiles(
+		"./templates/login.html",
+		"./templates/base.html",
+	))
+
+	// Hash password.
+	hashedPassword, err := auth.HashPassword(loginDetails.Password)
+	if err != nil {
+		loginDetails.Valid = false
+		w.WriteHeader(http.StatusUnauthorized)
+		err = tmpl.Execute(w, loginPageData)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	// Retrieve user
+	getUserParams := database.GetUserByLoginCredentialsParams{
+		Email: sql.NullString{
+			String: loginDetails.Email,
+			Valid:  true,
+		},
+		Password: sql.NullString{
+			String: hashedPassword,
+			Valid:  true,
+		},
+	}
+
+	user, err := a.Db.GetUserByLoginCredentials(ctx, getUserParams)
+	if err != nil {
+		loginDetails.Valid = false
+		w.WriteHeader(http.StatusUnauthorized)
+		err = tmpl.Execute(w, loginPageData)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	tokenString, err := auth.MakeJWT(user.ID, a.Env.Secret)
+	if err != nil {
+		loginDetails.Valid = false
+		w.WriteHeader(http.StatusInternalServerError)
+		err = tmpl.Execute(w, loginPageData)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	refreshTokenString, err := auth.MakeRefreshToken()
+	if err != nil {
+		loginDetails.Valid = false
+		w.WriteHeader(http.StatusInternalServerError)
+		err = tmpl.Execute(w, loginPageData)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		Expires:  time.Now().Add(time.Hour * 24),
+		HttpOnly: true,
+		Secure:   true,
+		Domain:   "/",
+		SameSite: http.SameSiteStrictMode,
+	})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshTokenString,
+		Expires:  time.Now().Add(time.Hour * 30 * 24),
+		HttpOnly: true,
+		Domain:   "/",
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
 }
 
 func (a *APIConfig) HandlePostLogout(w http.ResponseWriter, r *http.Request) {
