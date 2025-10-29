@@ -11,8 +11,7 @@ RETURNING *;
 -- name: DeleteUsers :exec
 DELETE FROM users;
 
--- name: GetUserByLoginCredentials :one
+-- name: GetUserByEmail :one
 SELECT *
 FROM users
-WHERE email = $1
-AND password = $2;
+WHERE email = $1;

@@ -251,8 +251,12 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 		"./templates/base.html",
 	))
 
-	// Hash password.
-	hashedPassword, err := auth.HashPassword(loginDetails.Password)
+	email := sql.NullString{
+		String: loginDetails.Email,
+		Valid:  true,
+	}
+
+	user, err := a.Db.GetUserByEmail(ctx, email)
 	if err != nil {
 		loginDetails.Valid = false
 		w.WriteHeader(http.StatusUnauthorized)
@@ -260,23 +264,11 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		return
 	}
 
-	// Retrieve user
-	getUserParams := database.GetUserByLoginCredentialsParams{
-		Email: sql.NullString{
-			String: loginDetails.Email,
-			Valid:  true,
-		},
-		Password: sql.NullString{
-			String: hashedPassword,
-			Valid:  true,
-		},
-	}
+	valid := auth.CheckPasswordHash(loginDetails.Password, user.Password.String)
 
-	user, err := a.Db.GetUserByLoginCredentials(ctx, getUserParams)
-	if err != nil {
+	if !valid {
 		loginDetails.Valid = false
 		w.WriteHeader(http.StatusUnauthorized)
 		err = tmpl.Execute(w, loginPageData)

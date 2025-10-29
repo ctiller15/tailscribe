@@ -196,15 +196,14 @@ func TestHandlePostLogin(t *testing.T) {
 		loginApiCfg := NewAPIConfig(TestEnvVars, DbQueries)
 		loginApiCfg.HandlePostLogin(loginResponse, loginRequest)
 
-		loginResult := response.Result()
-		assert.Equal(t, 302, result.StatusCode)
+		loginResult := loginResponse.Result()
+		assert.Equal(t, 307, loginResult.StatusCode)
 
 		cookies := loginResult.Cookies()
 		assert.NotNil(t, cookies[0])
 		assert.Equal(t, "token", cookies[0].Name)
 		assert.NotNil(t, cookies[1])
 		assert.Equal(t, "refresh_token", cookies[1].Name)
-		t.Errorf("Finish the test!")
 	})
 
 	t.Run("Fails to log a user in if invalid username/password", func(t *testing.T) {
