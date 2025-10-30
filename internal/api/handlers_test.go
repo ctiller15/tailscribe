@@ -232,6 +232,10 @@ func TestHandlePostLogin(t *testing.T) {
 	})
 }
 
+func TestGetAddNewPethandler(t *testing.T) {
+	t.Errorf("Finish the test!")
+}
+
 func TestGetAttributions(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/attributions", nil)
 	response := httptest.NewRecorder()

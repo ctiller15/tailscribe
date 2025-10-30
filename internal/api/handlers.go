@@ -366,3 +366,7 @@ func (a *APIConfig) HandleContactUs(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 }
+
+func (a *APIConfig) HandleAddNewPet(w http.ResponseWriter, r *http.Request, user_id int) {
+	log.Fatal("Not implemented")
+}
