@@ -305,7 +305,7 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(time.Hour * 24),
 		HttpOnly: true,
 		Secure:   true,
-		Domain:   "/",
+		// Domain:   "/",
 		SameSite: http.SameSiteStrictMode,
 	})
 	http.SetCookie(w, &http.Cookie{
@@ -313,7 +313,7 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 		Value:    refreshTokenString,
 		Expires:  time.Now().Add(time.Hour * 30 * 24),
 		HttpOnly: true,
-		Domain:   "/",
+		// Domain:   "/",
 		SameSite: http.SameSiteStrictMode,
 	})
 

@@ -199,6 +199,8 @@ func TestHandlePostLogin(t *testing.T) {
 		loginResult := loginResponse.Result()
 		assert.Equal(t, 307, loginResult.StatusCode)
 
+		assert.Equal(t, loginResult.Header.Get("Location"), "/dashboard")
+
 		cookies := loginResult.Cookies()
 		assert.NotNil(t, cookies[0])
 		assert.Equal(t, "token", cookies[0].Name)
@@ -207,9 +209,24 @@ func TestHandlePostLogin(t *testing.T) {
 	})
 
 	t.Run("Fails to log a user in if invalid username/password", func(t *testing.T) {
-		t.Errorf("Finish the test!")
+		loginFormData := url.Values{
+			"email":    {"testEmail3@email.com"},
+			"password": {"password123"},
+		}
+
+		loginRequest, _ := http.NewRequest(http.MethodPost, "/login", strings.NewReader(loginFormData.Encode()))
+		loginRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+		loginResponse := httptest.NewRecorder()
+		loginApiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		loginApiCfg.HandlePostLogin(loginResponse, loginRequest)
+
+		loginResult := loginResponse.Result()
+		assert.Equal(t, 401, loginResult.StatusCode)
+
+		cookies := loginResult.Cookies()
+		assert.Len(t, cookies, 0)
 	})
-	t.Errorf("Finish the test!")
 }
 
 func TestGetAttributions(t *testing.T) {
