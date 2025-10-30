@@ -86,7 +86,10 @@ func TestHandlePostSignup(t *testing.T) {
 		apiCfg.HandlePostSignup(response, request)
 
 		result := response.Result()
-		assert.Equal(t, 201, result.StatusCode)
+		assert.Equal(t, 302, result.StatusCode)
+
+		assert.Equal(t, result.Header.Get("Location"), "/add_new_pet")
+
 		cookies := result.Cookies()
 		assert.NotNil(t, cookies[0])
 		assert.Equal(t, "token", cookies[0].Name)
@@ -137,7 +140,7 @@ func TestHandleLogout(t *testing.T) {
 
 		logoutResult := logoutResponse.Result()
 
-		assert.Equal(t, 307, logoutResult.StatusCode)
+		assert.Equal(t, 302, logoutResult.StatusCode)
 		logoutCookies := logoutResult.Cookies()
 		assert.NotNil(t, logoutCookies[0])
 		assert.Equal(t, "token", logoutCookies[0].Name)
@@ -157,7 +160,7 @@ func TestHandleLogout(t *testing.T) {
 
 		logoutResult := logoutResponse.Result()
 
-		assert.Equal(t, 307, logoutResult.StatusCode)
+		assert.Equal(t, 302, logoutResult.StatusCode)
 		logoutCookies := logoutResult.Cookies()
 		assert.NotNil(t, logoutCookies[0])
 		assert.Equal(t, "token", logoutCookies[0].Name)
@@ -182,7 +185,7 @@ func TestHandlePostLogin(t *testing.T) {
 		apiCfg.HandlePostSignup(response, request)
 
 		result := response.Result()
-		assert.Equal(t, 201, result.StatusCode)
+		assert.Equal(t, 302, result.StatusCode)
 
 		loginFormData := url.Values{
 			"email":    {"testEmail2@email.com"},
@@ -197,7 +200,7 @@ func TestHandlePostLogin(t *testing.T) {
 		loginApiCfg.HandlePostLogin(loginResponse, loginRequest)
 
 		loginResult := loginResponse.Result()
-		assert.Equal(t, 307, loginResult.StatusCode)
+		assert.Equal(t, 302, loginResult.StatusCode)
 
 		assert.Equal(t, loginResult.Header.Get("Location"), "/dashboard")
 
