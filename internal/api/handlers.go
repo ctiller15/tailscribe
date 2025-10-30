@@ -38,10 +38,6 @@ type LoginForm struct {
 	Valid    bool
 }
 
-type HtmlPageData interface {
-	SignupPageData | LoginPageData
-}
-
 type LoginPageData struct {
 	Title string
 	LoginForm
@@ -234,6 +230,21 @@ func expireCookie(w *http.ResponseWriter, cookie_name string) {
 	})
 }
 
+func RejectPostLogin(
+	w http.ResponseWriter,
+	tmpl *template.Template,
+	loginDetails *LoginForm,
+	loginPageData *LoginPageData,
+	status int) error {
+
+	loginDetails.Valid = false
+	w.WriteHeader(status)
+
+	err := tmpl.Execute(w, loginPageData)
+
+	return err
+}
+
 func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	loginDetails := LoginForm{
@@ -258,30 +269,26 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 
 	user, err := a.Db.GetUserByEmail(ctx, email)
 	if err != nil {
-		loginDetails.Valid = false
-		w.WriteHeader(http.StatusUnauthorized)
-		err = tmpl.Execute(w, loginPageData)
+		err = RejectPostLogin(w, tmpl, &loginDetails, &loginPageData, http.StatusUnauthorized)
 		if err != nil {
 			log.Fatal(err)
 		}
+		return
 	}
 
 	valid := auth.CheckPasswordHash(loginDetails.Password, user.Password.String)
 
 	if !valid {
-		loginDetails.Valid = false
-		w.WriteHeader(http.StatusUnauthorized)
-		err = tmpl.Execute(w, loginPageData)
+		err = RejectPostLogin(w, tmpl, &loginDetails, &loginPageData, http.StatusUnauthorized)
 		if err != nil {
 			log.Fatal(err)
 		}
+		return
 	}
 
 	tokenString, err := auth.MakeJWT(user.ID, a.Env.Secret)
 	if err != nil {
-		loginDetails.Valid = false
-		w.WriteHeader(http.StatusInternalServerError)
-		err = tmpl.Execute(w, loginPageData)
+		err = RejectPostLogin(w, tmpl, &loginDetails, &loginPageData, http.StatusInternalServerError)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -290,9 +297,7 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 
 	refreshTokenString, err := auth.MakeRefreshToken()
 	if err != nil {
-		loginDetails.Valid = false
-		w.WriteHeader(http.StatusInternalServerError)
-		err = tmpl.Execute(w, loginPageData)
+		err = RejectPostLogin(w, tmpl, &loginDetails, &loginPageData, http.StatusInternalServerError)
 		if err != nil {
 			log.Fatal(err)
 		}
