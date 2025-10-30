@@ -21,9 +21,26 @@ type IndexPageData struct {
 	BasePageData
 }
 
+type SignupForm struct {
+	Email    string
+	Password string
+	Valid    bool
+}
+
 type SignupPageData struct {
 	Title string
-	SignupDetails
+	SignupForm
+}
+
+type LoginForm struct {
+	Email    string
+	Password string
+	Valid    bool
+}
+
+type LoginPageData struct {
+	Title string
+	LoginForm
 }
 
 type AttributionsPageData struct {
@@ -82,22 +99,16 @@ func (a *APIConfig) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type SignupDetails struct {
-	Email    string
-	Password string
-	Valid    bool
-}
-
 func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	signupDetails := SignupDetails{
+	signupDetails := SignupForm{
 		Email:    r.FormValue("email"),
 		Password: r.FormValue("password"),
 	}
 
 	signupPageData := SignupPageData{
-		Title:         "TailScribe - Sign Up",
-		SignupDetails: signupDetails,
+		Title:      "TailScribe - Sign Up",
+		SignupForm: signupDetails,
 	}
 
 	tmpl := template.Must(template.ParseFiles(
@@ -154,60 +165,19 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenString, err := auth.MakeJWT(user.ID, a.Env.Secret)
-	if err != nil {
-		signupDetails.Valid = false
-		w.WriteHeader(http.StatusInternalServerError)
-		err = tmpl.Execute(w, signupPageData)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return
-	}
-
-	refreshTokenString, err := auth.MakeRefreshToken()
-	if err != nil {
-		signupDetails.Valid = false
-		w.WriteHeader(http.StatusInternalServerError)
-		err = tmpl.Execute(w, signupPageData)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return
-	}
-
-	newPetPageData := BasePageData{
-		Title: "Add a new Pet",
-	}
-
-	// Create new template that points to new pet page.
-	tmpl = template.Must(template.ParseFiles(
-		"./templates/new_pet.html",
-		"./templates/base.html",
-	))
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "token",
-		Value:    tokenString,
-		Expires:  time.Now().Add(time.Hour * 24),
-		HttpOnly: true,
-		Secure:   true,
-		Domain:   "/",
-		SameSite: http.SameSiteStrictMode,
-	})
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshTokenString,
-		Expires:  time.Now().Add(time.Hour * 30 * 24),
-		HttpOnly: true,
-		Domain:   "/",
-		SameSite: http.SameSiteStrictMode,
-	})
-	w.WriteHeader(http.StatusCreated)
-	err = tmpl.Execute(w, newPetPageData)
+	err = a.createAndAttachSessionCookies(&w, user)
 	if err != nil {
 		log.Fatal(err)
+		signupDetails.Valid = false
+		w.WriteHeader(http.StatusBadRequest)
+		err = tmpl.Execute(w, signupPageData)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
 	}
+
+	http.Redirect(w, r, "/add_new_pet", http.StatusFound)
 }
 
 func expireCookie(w *http.ResponseWriter, cookie_name string) {
@@ -219,11 +189,115 @@ func expireCookie(w *http.ResponseWriter, cookie_name string) {
 	})
 }
 
+func (a *APIConfig) createAndAttachSessionCookies(
+	w *http.ResponseWriter,
+	user database.User,
+) error {
+	tokenString, err := auth.MakeJWT(user.ID, a.Env.Secret)
+	if err != nil {
+		return err
+	}
+
+	refreshTokenString, err := auth.MakeRefreshToken()
+	if err != nil {
+		return err
+	}
+
+	http.SetCookie(*w, &http.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		Expires:  time.Now().Add(time.Hour * 24),
+		HttpOnly: true,
+		Secure:   true,
+		// Domain:   "/",
+		SameSite: http.SameSiteStrictMode,
+	})
+	http.SetCookie(*w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshTokenString,
+		Expires:  time.Now().Add(time.Hour * 30 * 24),
+		HttpOnly: true,
+		// Domain:   "/",
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	return nil
+}
+
+func RejectPostLogin(
+	w http.ResponseWriter,
+	tmpl *template.Template,
+	loginDetails *LoginForm,
+	loginPageData *LoginPageData,
+	status int) error {
+
+	loginDetails.Valid = false
+	w.WriteHeader(status)
+
+	err := tmpl.Execute(w, loginPageData)
+
+	return err
+}
+
+func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	loginDetails := LoginForm{
+		Email:    r.FormValue("email"),
+		Password: r.FormValue("password"),
+	}
+
+	loginPageData := LoginPageData{
+		Title:     "TailScribe - Log In",
+		LoginForm: loginDetails,
+	}
+
+	tmpl := template.Must(template.ParseFiles(
+		"./templates/login.html",
+		"./templates/base.html",
+	))
+
+	email := sql.NullString{
+		String: loginDetails.Email,
+		Valid:  true,
+	}
+
+	user, err := a.Db.GetUserByEmail(ctx, email)
+	if err != nil {
+		err = RejectPostLogin(w, tmpl, &loginDetails, &loginPageData, http.StatusUnauthorized)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	valid := auth.CheckPasswordHash(loginDetails.Password, user.Password.String)
+
+	if !valid {
+		err = RejectPostLogin(w, tmpl, &loginDetails, &loginPageData, http.StatusUnauthorized)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	err = a.createAndAttachSessionCookies(&w, user)
+	if err != nil {
+		log.Fatal(err)
+		err = RejectPostLogin(w, tmpl, &loginDetails, &loginPageData, http.StatusInternalServerError)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	http.Redirect(w, r, "/dashboard", http.StatusFound)
+}
+
 func (a *APIConfig) HandlePostLogout(w http.ResponseWriter, r *http.Request) {
 	expireCookie(&w, "token")
 	expireCookie(&w, "refresh_token")
 
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {

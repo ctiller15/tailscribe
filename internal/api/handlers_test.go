@@ -86,7 +86,10 @@ func TestHandlePostSignup(t *testing.T) {
 		apiCfg.HandlePostSignup(response, request)
 
 		result := response.Result()
-		assert.Equal(t, 201, result.StatusCode)
+		assert.Equal(t, 302, result.StatusCode)
+
+		assert.Equal(t, result.Header.Get("Location"), "/add_new_pet")
+
 		cookies := result.Cookies()
 		assert.NotNil(t, cookies[0])
 		assert.Equal(t, "token", cookies[0].Name)
@@ -137,7 +140,7 @@ func TestHandleLogout(t *testing.T) {
 
 		logoutResult := logoutResponse.Result()
 
-		assert.Equal(t, 307, logoutResult.StatusCode)
+		assert.Equal(t, 302, logoutResult.StatusCode)
 		logoutCookies := logoutResult.Cookies()
 		assert.NotNil(t, logoutCookies[0])
 		assert.Equal(t, "token", logoutCookies[0].Name)
@@ -157,7 +160,7 @@ func TestHandleLogout(t *testing.T) {
 
 		logoutResult := logoutResponse.Result()
 
-		assert.Equal(t, 307, logoutResult.StatusCode)
+		assert.Equal(t, 302, logoutResult.StatusCode)
 		logoutCookies := logoutResult.Cookies()
 		assert.NotNil(t, logoutCookies[0])
 		assert.Equal(t, "token", logoutCookies[0].Name)
@@ -165,6 +168,67 @@ func TestHandleLogout(t *testing.T) {
 
 		assert.Equal(t, "refresh_token", logoutCookies[1].Name)
 		assert.Equal(t, "", logoutCookies[1].Value)
+	})
+}
+
+func TestHandlePostLogin(t *testing.T) {
+	t.Run("Successfully logs a user in", func(t *testing.T) {
+		formData := url.Values{
+			"email":    {"testEmail2@email.com"},
+			"password": {"password123"},
+		}
+
+		request, _ := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(formData.Encode()))
+		request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		response := httptest.NewRecorder()
+		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg.HandlePostSignup(response, request)
+
+		result := response.Result()
+		assert.Equal(t, 302, result.StatusCode)
+
+		loginFormData := url.Values{
+			"email":    {"testEmail2@email.com"},
+			"password": {"password123"},
+		}
+
+		loginRequest, _ := http.NewRequest(http.MethodPost, "/login", strings.NewReader(loginFormData.Encode()))
+		loginRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+		loginResponse := httptest.NewRecorder()
+		loginApiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		loginApiCfg.HandlePostLogin(loginResponse, loginRequest)
+
+		loginResult := loginResponse.Result()
+		assert.Equal(t, 302, loginResult.StatusCode)
+
+		assert.Equal(t, loginResult.Header.Get("Location"), "/dashboard")
+
+		cookies := loginResult.Cookies()
+		assert.NotNil(t, cookies[0])
+		assert.Equal(t, "token", cookies[0].Name)
+		assert.NotNil(t, cookies[1])
+		assert.Equal(t, "refresh_token", cookies[1].Name)
+	})
+
+	t.Run("Fails to log a user in if invalid username/password", func(t *testing.T) {
+		loginFormData := url.Values{
+			"email":    {"testEmail3@email.com"},
+			"password": {"password123"},
+		}
+
+		loginRequest, _ := http.NewRequest(http.MethodPost, "/login", strings.NewReader(loginFormData.Encode()))
+		loginRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+		loginResponse := httptest.NewRecorder()
+		loginApiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		loginApiCfg.HandlePostLogin(loginResponse, loginRequest)
+
+		loginResult := loginResponse.Result()
+		assert.Equal(t, 401, loginResult.StatusCode)
+
+		cookies := loginResult.Cookies()
+		assert.Len(t, cookies, 0)
 	})
 }
 

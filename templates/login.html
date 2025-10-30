@@ -1,0 +1,20 @@
+{{ template "top" .}}
+
+{{ template "navbar" . }}
+
+<div class="vertical-stretch-container">
+    <div class="mdl-card mdl-shadow--2dp">
+        <h1>Welcome back!</h1>
+
+        <p>Log in to your account</p>
+
+        <form method="POST" action="/signup">
+            <input name="email" />
+            <input name="password" />
+
+            <button>Login</button>
+        </form>
+    </div>
+</div>
+
+{{ template "bottom" }}
