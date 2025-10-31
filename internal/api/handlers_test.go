@@ -54,6 +54,24 @@ func init() {
 	defer teardown(ctx)
 }
 
+func signUserUp(email, password string) []*http.Cookie {
+	formData := url.Values{
+		"email":    {email},
+		"password": {password},
+	}
+
+	request, _ := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(formData.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response := httptest.NewRecorder()
+	apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+	apiCfg.HandlePostSignup(response, request)
+
+	result := response.Result()
+
+	cookies := result.Cookies()
+	return cookies
+}
+
 func TestGetIndex(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/", nil)
 	response := httptest.NewRecorder()
@@ -232,6 +250,43 @@ func TestHandlePostLogin(t *testing.T) {
 	})
 }
 
+// Authorized routes
+func TestGetAddNewPethandler(t *testing.T) {
+	t.Run("Fails to find add new pet page when unauthorized", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/dashboard/add_new_pet", nil)
+		response := httptest.NewRecorder()
+
+		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg.CheckAuthMiddleware(
+			apiCfg.HandleAddNewPet,
+		)(response, request)
+
+		result := response.Result()
+
+		assert.Equal(t, 401, result.StatusCode)
+		assert.Equal(t, result.Header.Get("Location"), "/login")
+	})
+
+	t.Run("Succeeds at finding add new pet page when authorized", func(t *testing.T) {
+		cookies := signUserUp("testEmail4@test.com", "password123")
+
+		auth_cookie := *cookies[0]
+
+		request, _ := http.NewRequest(http.MethodGet, "/dashboard/add_new_pet", nil)
+		request.AddCookie(&auth_cookie)
+
+		response := httptest.NewRecorder()
+		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg.CheckAuthMiddleware(
+			apiCfg.HandleAddNewPet,
+		)(response, request)
+
+		result := response.Result()
+		assert.Equal(t, 200, result.StatusCode)
+	})
+}
+
+// Unauthorized routes
 func TestGetAttributions(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/attributions", nil)
 	response := httptest.NewRecorder()

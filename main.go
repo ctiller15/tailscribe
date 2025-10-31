@@ -49,6 +49,8 @@ func main() {
 	mux.HandleFunc("/privacy", apiCfg.HandlePrivacyPolicy)
 	mux.HandleFunc("/contact", apiCfg.HandleContactUs)
 
+	mux.Handle("GET /dashboard/add_new_pet", apiCfg.CheckAuthMiddleware(apiCfg.HandleAddNewPet))
+
 	// Start server
 	server := http.Server{
 		Handler:           mux,

@@ -366,3 +366,19 @@ func (a *APIConfig) HandleContactUs(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 }
+
+func (a *APIConfig) HandleAddNewPet(w http.ResponseWriter, r *http.Request, user_id int) {
+	tmpl := template.Must(template.ParseFiles(
+		"./templates/new_pet.html",
+		"./templates/base.html",
+	))
+
+	data := BasePageData{
+		Title: "Add New Pet",
+	}
+
+	err := tmpl.Execute(w, data)
+	if err != nil {
+		log.Fatal(err)
+	}
+}

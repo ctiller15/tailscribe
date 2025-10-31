@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -38,6 +39,32 @@ func MakeJWT(userID int32, tokenSecret string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func ValidateJWT(tokenString, tokenSecret string) (int, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Method)
+		}
+
+		return []byte(tokenSecret), nil
+	})
+
+	if err != nil {
+		return -1, err
+	}
+
+	claims, ok := token.Claims.(*jwt.RegisteredClaims)
+	if !ok || !token.Valid {
+		return -1, fmt.Errorf("invalid or expired token")
+	}
+
+	userID, err := strconv.Atoi(claims.Subject)
+	if err != nil {
+		return -1, fmt.Errorf("invalid user ID: %v", err)
+	}
+
+	return userID, nil
 }
 
 func MakeRefreshToken() (string, error) {
