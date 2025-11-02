@@ -425,7 +425,10 @@ func (a *APIConfig) HandleGetImageAuthParams(w http.ResponseWriter, r *http.Requ
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(500)
-		w.Write(dat)
+		_, err = w.Write(dat)
+		if err != nil {
+			log.Printf("Error writing data: %s", err)
+		}
 		return
 	}
 
@@ -451,5 +454,8 @@ func (a *APIConfig) HandleGetImageAuthParams(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
-	w.Write(dat)
+	_, err = w.Write(dat)
+	if err != nil {
+		log.Printf("Error writing data: %s", err)
+	}
 }
