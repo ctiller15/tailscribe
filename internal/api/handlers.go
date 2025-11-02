@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -10,6 +11,8 @@ import (
 
 	"github.com/ctiller15/tailscribe/internal/auth"
 	"github.com/ctiller15/tailscribe/internal/database"
+	"github.com/imagekit-developer/imagekit-go/v2" // imported as imagekit
+	"github.com/imagekit-developer/imagekit-go/v2/option"
 )
 
 type BasePageData struct {
@@ -61,8 +64,14 @@ type ContactUsPageData struct {
 	ContactEmail string
 }
 
+type AddPetForm struct {
+	Image string
+	Name  string
+}
+
 type NewPetPageData struct {
 	Title string
+	AddPetForm
 }
 
 func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
@@ -380,5 +389,73 @@ func (a *APIConfig) HandleAddNewPet(w http.ResponseWriter, r *http.Request, user
 	err := tmpl.Execute(w, data)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func (a *APIConfig) HandleGetImageAuthParams(w http.ResponseWriter, r *http.Request, user_id int) {
+	type responseStruct struct {
+		Expire    int64  `json:"expire"`
+		Signature string `json:"signature"`
+		Token     string `json:"token"`
+	}
+	client := imagekit.NewClient(
+		option.WithPrivateKey(a.Env.ImageKitPrivateKey),
+	)
+
+	authParams, err := client.Helper.GetAuthenticationParameters("", 0)
+
+	if err != nil {
+		log.Printf("Error getting auth parameters, %s\n", err)
+
+		type errStruct struct {
+			Error string `json:"error"`
+		}
+
+		newErr := errStruct{
+			Error: "error getting auth parameters",
+		}
+
+		dat, err := json.Marshal(newErr)
+
+		if err != nil {
+			log.Printf("Error marshalling JSON: %s", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(500)
+		_, err = w.Write(dat)
+		if err != nil {
+			log.Printf("Error writing data: %s", err)
+		}
+		return
+	}
+
+	response := responseStruct{
+		Expire:    authParams["expire"].(int64),
+		Signature: authParams["signature"].(string),
+		Token:     authParams["token"].(string),
+	}
+
+	// Pass params back via json
+	// // Result: map[expire:<timestamp> signature:<hmac-signature> token:<uuid-token>]
+	// Frontend uses params to build request. See https://imagekit.io/docs/integration/javascript#upload-example-and-error-handling
+	// template.JS()
+
+	// Steps for future respondwjson method
+
+	dat, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err = w.Write(dat)
+	if err != nil {
+		log.Printf("Error writing data: %s", err)
 	}
 }

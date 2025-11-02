@@ -16,10 +16,11 @@ type DatabaseEnv struct {
 }
 
 type EnvVars struct {
-	Addr         string
-	ContactEmail string
-	Database     DatabaseEnv
-	Secret       string
+	Addr               string
+	ContactEmail       string
+	Database           DatabaseEnv
+	Secret             string
+	ImageKitPrivateKey string
 }
 
 func NewEnvVars() *EnvVars {
@@ -31,6 +32,7 @@ func NewEnvVars() *EnvVars {
 	dbHost := os.Getenv("POSTGRES_HOST")
 	dbPort := os.Getenv("POSTGRES_PORT")
 	secret := os.Getenv("SECRET")
+	imageKitPrivateKey := os.Getenv("IMAGE_KIT_PRIVATE_KEY")
 
 	return &EnvVars{
 		Addr:         addr,
@@ -42,7 +44,8 @@ func NewEnvVars() *EnvVars {
 			Host:     dbHost,
 			Port:     dbPort,
 		},
-		Secret: secret,
+		Secret:             secret,
+		ImageKitPrivateKey: imageKitPrivateKey,
 	}
 }
 
