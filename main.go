@@ -49,7 +49,7 @@ func main() {
 	mux.HandleFunc("/privacy", apiCfg.HandlePrivacyPolicy)
 	mux.HandleFunc("/contact", apiCfg.HandleContactUs)
 
-	mux.Handle("GET /dashboard/add_new_pet", apiCfg.CheckAuthMiddleware(apiCfg.HandleAddNewPet))
+	mux.Handle("GET /dashboard/add_new_pet", apiCfg.CheckAuthMiddleware(apiCfg.HandleGetAddNewPet))
 
 	// Start server
 	server := http.Server{
