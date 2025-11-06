@@ -3,6 +3,7 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -44,6 +45,17 @@ type LoginForm struct {
 type LoginPageData struct {
 	Title string
 	LoginForm
+}
+
+type AddNewPetForm struct {
+	Image string
+	Name  string
+	Valid bool
+}
+
+type AddNewPetPageData struct {
+	Title string
+	AddNewPetForm
 }
 
 type AttributionsPageData struct {
@@ -376,7 +388,7 @@ func (a *APIConfig) HandleContactUs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a *APIConfig) HandleAddNewPet(w http.ResponseWriter, r *http.Request, user_id int) {
+func (a *APIConfig) HandleGetAddNewPet(w http.ResponseWriter, r *http.Request, user_id int) {
 	tmpl := template.Must(template.ParseFiles(
 		"./templates/new_pet.html",
 		"./templates/base.html",
@@ -390,6 +402,50 @@ func (a *APIConfig) HandleAddNewPet(w http.ResponseWriter, r *http.Request, user
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (a *APIConfig) HandlePostAddNewPet(w http.ResponseWriter, r *http.Request, user_id int) {
+	ctx := r.Context()
+	addNewPetForm := AddNewPetForm{
+		Image: r.FormValue("image"),
+		Name:  r.FormValue("name"),
+	}
+
+	addNewPetPageData := AddNewPetPageData{
+		Title:         "TailScribe - Log In",
+		AddNewPetForm: addNewPetForm,
+	}
+
+	// Attempt to create pet.
+	imageUrl := sql.NullString{
+		String: addNewPetForm.Image,
+	}
+	createPetParams := database.CreatePetParams{
+		Name:     addNewPetForm.Name,
+		Imageurl: imageUrl,
+	}
+
+	newPet, err := a.Db.CreatePet(ctx, createPetParams)
+
+	if err != nil {
+		// return previous page, etc.
+		log.Printf("error creating pet: %v", err)
+		tmpl := template.Must(template.ParseFiles(
+			"./templates/new_pet.html",
+			"./templates/base.html",
+		))
+
+		addNewPetPageData.Valid = false
+		w.WriteHeader(http.StatusBadRequest)
+
+		err = tmpl.Execute(w, addNewPetPageData)
+		if err != nil {
+			log.Printf("an error occurred: %v", err)
+		}
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/dashboard/pet/%d", newPet.ID), http.StatusCreated)
 }
 
 func (a *APIConfig) HandleGetImageAuthParams(w http.ResponseWriter, r *http.Request, user_id int) {

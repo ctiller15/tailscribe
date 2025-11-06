@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -52,6 +54,22 @@ func init() {
 	DbQueries = database.New(db)
 
 	defer teardown(ctx)
+}
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func randStringBytes(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
+
+func randTestEmail() string {
+	prefix := randStringBytes(15)
+
+	return prefix + "@test.com"
 }
 
 func signUserUp(email, password string) []*http.Cookie {
@@ -258,7 +276,7 @@ func TestGetAddNewPethandler(t *testing.T) {
 
 		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
 		apiCfg.CheckAuthMiddleware(
-			apiCfg.HandleAddNewPet,
+			apiCfg.HandleGetAddNewPet,
 		)(response, request)
 
 		result := response.Result()
@@ -278,11 +296,61 @@ func TestGetAddNewPethandler(t *testing.T) {
 		response := httptest.NewRecorder()
 		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
 		apiCfg.CheckAuthMiddleware(
-			apiCfg.HandleAddNewPet,
+			apiCfg.HandleGetAddNewPet,
 		)(response, request)
 
 		result := response.Result()
 		assert.Equal(t, 200, result.StatusCode)
+	})
+}
+
+func TestHandlePostAddNewPet(t *testing.T) {
+	t.Run("Fails to create new pet when unauthorized", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/dashboard/add_new_pet", nil)
+
+		response := httptest.NewRecorder()
+		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+
+		apiCfg.CheckAuthMiddleware(
+			apiCfg.HandlePostAddNewPet,
+		)(response, request)
+
+		result := response.Result()
+		assert.Equal(t, 401, result.StatusCode)
+		assert.Equal(t, result.Header.Get("Location"), "/login")
+	})
+
+	t.Run("Succeeds at creating new pet when authorized", func(t *testing.T) {
+		testEmail := randTestEmail()
+		cookies := signUserUp(testEmail, "password123")
+
+		auth_cookie := *cookies[0]
+
+		formData := url.Values{
+			"image": nil,
+			"name":  {"fido"},
+		}
+
+		request, _ := http.NewRequest(http.MethodGet, "/dashboard/add_new_pet", strings.NewReader(formData.Encode()))
+		request.AddCookie(&auth_cookie)
+
+		response := httptest.NewRecorder()
+		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+
+		apiCfg.CheckAuthMiddleware(
+			apiCfg.HandlePostAddNewPet,
+		)(response, request)
+
+		result := response.Result()
+		assert.Equal(t, 201, result.StatusCode)
+
+		pathRegex := `/dashboard/pet/\d+`
+		matched, err := regexp.MatchString(pathRegex, result.Header.Get("Location"))
+		if err != nil {
+			t.Errorf("%v", err)
+		}
+
+		assert.True(t, matched)
 	})
 }
 

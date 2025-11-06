@@ -9,6 +9,25 @@ import (
 	"time"
 )
 
+type Pet struct {
+	ID                 int32
+	Name               string
+	Dateofbirth        sql.NullTime
+	Dateofbirthexact   sql.NullBool
+	Imageurl           sql.NullString
+	AboutText          sql.NullString
+	Species            sql.NullString
+	Breed              sql.NullString
+	Sex                sql.NullString
+	Ispubliclyviewable bool
+	Likeshidden        bool
+	Skillshidden       bool
+	Goalshidden        bool
+	Titleshidden       bool
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+}
+
 type User struct {
 	ID                   int32
 	Email                sql.NullString
@@ -25,4 +44,14 @@ type User struct {
 	IsDeleted            bool
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
+}
+
+type Userpet struct {
+	Userid           int32
+	Petid            int32
+	PermissionsLevel int32
+	Active           bool
+	Hidden           bool
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
