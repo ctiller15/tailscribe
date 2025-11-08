@@ -1,20 +1,18 @@
-{{ template "top" .}}
+{{ define "title"}}TailScribe - Sign Up{{end}}
 
-{{ template "navbar" . }}
-
+{{ define "main"}}
 <div class="vertical-stretch-container">
     <div class="mdl-card mdl-shadow--2dp">
-        <h1>Welcome back!</h1>
+        <h1>Welcome!</h1>
 
-        <p>Log in to your account</p>
+        <p>Let's make your account</p>
 
         <form method="POST" action="/signup">
             <input name="email" />
             <input name="password" />
 
-            <button>Login</button>
+            <button>Get Started!</button>
         </form>
     </div>
 </div>
-
-{{ template "bottom" }}
+{{ end }}

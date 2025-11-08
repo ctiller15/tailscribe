@@ -33,13 +33,13 @@ func main() {
 	apiCfg := api.NewAPIConfig(envVars, dbQueries)
 
 	// Initialize routing - break into own func first
-	fs := http.FileServer(http.Dir("assets/"))
+	fs := http.FileServer(http.Dir("./ui/static/"))
 
 	mux := http.NewServeMux()
 
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	mux.HandleFunc("/", apiCfg.HandleIndex)
+	mux.HandleFunc("GET /{$}", apiCfg.HandleIndex)
 	mux.HandleFunc("GET /signup", apiCfg.HandleSignupPage)
 	mux.HandleFunc("POST /signup", apiCfg.HandlePostSignup)
 	mux.HandleFunc("POST /login", apiCfg.HandlePostLogin)
