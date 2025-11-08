@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/mail"
 	"time"
@@ -96,7 +96,8 @@ func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 	err := tmpl.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		log.Fatal(err)
+		a.Logger.Error(err.Error())
+		return
 	}
 }
 
@@ -110,7 +111,8 @@ func (a *APIConfig) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
 
 	err := tmpl.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		log.Fatal(err)
+		a.Logger.Error(err.Error())
+		return
 	}
 }
 
@@ -135,7 +137,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		err := tmpl.ExecuteTemplate(w, "base", signupDetails)
 		if err != nil {
-			log.Fatal(err)
+			a.Logger.Error(err.Error())
 		}
 		return
 	}
@@ -147,7 +149,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		err := tmpl.ExecuteTemplate(w, "base", signupDetails)
 		if err != nil {
-			log.Fatal(err)
+			a.Logger.Error(err.Error())
 		}
 		return
 	}
@@ -171,19 +173,19 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		err := tmpl.ExecuteTemplate(w, "base", signupDetails)
 		if err != nil {
-			log.Fatal(err)
+			a.Logger.Error(err.Error())
 		}
 		return
 	}
 
 	err = a.createAndAttachSessionCookies(&w, user)
 	if err != nil {
-		log.Fatal(err)
+		a.Logger.Error("error creating session cookies", slog.String("error", err.Error()))
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
 		err := tmpl.ExecuteTemplate(w, "base", signupDetails)
 		if err != nil {
-			log.Fatal(err)
+			a.Logger.Error(err.Error())
 		}
 		return
 	}
@@ -271,7 +273,7 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err = RejectPostLogin(w, tmpl, &loginDetails, http.StatusUnauthorized)
 		if err != nil {
-			log.Fatal(err)
+			a.Logger.Error(err.Error())
 		}
 		return
 	}
@@ -281,17 +283,17 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 	if !valid {
 		err = RejectPostLogin(w, tmpl, &loginDetails, http.StatusUnauthorized)
 		if err != nil {
-			log.Fatal(err)
+			a.Logger.Error(err.Error())
 		}
 		return
 	}
 
 	err = a.createAndAttachSessionCookies(&w, user)
 	if err != nil {
-		log.Fatal(err)
+		a.Logger.Error(err.Error())
 		err = RejectPostLogin(w, tmpl, &loginDetails, http.StatusInternalServerError)
 		if err != nil {
-			log.Fatal(err)
+			a.Logger.Error(err.Error())
 		}
 		return
 	}
@@ -316,7 +318,7 @@ func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {
 	err := tmpl.ExecuteTemplate(w, "base", nil)
 	// Instead of a log fatal, probably a generic 500 page.
 	if err != nil {
-		log.Fatal(err)
+		a.Logger.Error(err.Error())
 	}
 }
 
@@ -329,7 +331,7 @@ func (a *APIConfig) HandleTerms(w http.ResponseWriter, r *http.Request) {
 
 	err := tmpl.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		log.Fatal(err)
+		a.Logger.Error(err.Error())
 	}
 }
 
@@ -346,7 +348,7 @@ func (a *APIConfig) HandlePrivacyPolicy(w http.ResponseWriter, r *http.Request) 
 
 	err := tmpl.ExecuteTemplate(w, "base", data)
 	if err != nil {
-		log.Fatal(err)
+		a.Logger.Error(err.Error())
 	}
 }
 
@@ -363,7 +365,7 @@ func (a *APIConfig) HandleContactUs(w http.ResponseWriter, r *http.Request) {
 
 	err := tmpl.ExecuteTemplate(w, "base", data)
 	if err != nil {
-		log.Fatal(err)
+		a.Logger.Error(err.Error())
 	}
 }
 
@@ -376,7 +378,7 @@ func (a *APIConfig) HandleGetAddNewPet(w http.ResponseWriter, r *http.Request, u
 
 	err := tmpl.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		log.Fatal(err)
+		a.Logger.Error(err.Error())
 	}
 }
 
@@ -405,7 +407,7 @@ func (a *APIConfig) HandlePostAddNewPet(w http.ResponseWriter, r *http.Request, 
 
 	if err != nil {
 		// return previous page, etc.
-		log.Printf("error creating pet: %v", err)
+		a.Logger.Error("error creating pet", slog.String("error", err.Error()))
 		tmpl := template.Must(template.ParseFiles(
 			"./templates/new_pet.html",
 			"./templates/base.html",
@@ -416,7 +418,7 @@ func (a *APIConfig) HandlePostAddNewPet(w http.ResponseWriter, r *http.Request, 
 
 		err = tmpl.ExecuteTemplate(w, "base", addNewPetPageData)
 		if err != nil {
-			log.Printf("an error occurred: %v", err)
+			a.Logger.Error(err.Error())
 		}
 		return
 	}
@@ -437,7 +439,7 @@ func (a *APIConfig) HandleGetImageAuthParams(w http.ResponseWriter, r *http.Requ
 	authParams, err := client.Helper.GetAuthenticationParameters("", 0)
 
 	if err != nil {
-		log.Printf("Error getting auth parameters, %s\n", err)
+		a.Logger.Error("Error getting auth parameters", slog.String("error", err.Error()))
 
 		type errStruct struct {
 			Error string `json:"error"`
@@ -450,7 +452,8 @@ func (a *APIConfig) HandleGetImageAuthParams(w http.ResponseWriter, r *http.Requ
 		dat, err := json.Marshal(newErr)
 
 		if err != nil {
-			log.Printf("Error marshalling JSON: %s", err)
+			a.Logger.Error("error writing marshalling JSON", slog.String("error", err.Error()))
+
 			w.WriteHeader(500)
 			return
 		}
@@ -459,7 +462,7 @@ func (a *APIConfig) HandleGetImageAuthParams(w http.ResponseWriter, r *http.Requ
 		w.WriteHeader(500)
 		_, err = w.Write(dat)
 		if err != nil {
-			log.Printf("Error writing data: %s", err)
+			a.Logger.Error("error writing data", slog.String("error", err.Error()))
 		}
 		return
 	}
@@ -479,7 +482,7 @@ func (a *APIConfig) HandleGetImageAuthParams(w http.ResponseWriter, r *http.Requ
 
 	dat, err := json.Marshal(response)
 	if err != nil {
-		log.Printf("Error marshalling JSON: %s", err)
+		a.Logger.Error("error writing marshalling JSON", slog.String("error", err.Error()))
 		w.WriteHeader(500)
 		return
 	}
@@ -488,6 +491,6 @@ func (a *APIConfig) HandleGetImageAuthParams(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(201)
 	_, err = w.Write(dat)
 	if err != nil {
-		log.Printf("Error writing data: %s", err)
+		a.Logger.Error("error writing data", slog.String("error", err.Error()))
 	}
 }
