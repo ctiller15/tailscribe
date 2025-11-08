@@ -3,7 +3,9 @@ package main
 import (
 	"database/sql"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/ctiller15/tailscribe/internal/api"
@@ -30,7 +32,9 @@ func main() {
 
 	dbQueries := database.New(db)
 
-	apiCfg := api.NewAPIConfig(envVars, dbQueries)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	apiCfg := api.NewAPIConfig(envVars, dbQueries, logger)
 
 	// Initialize routing - break into own func first
 	fs := http.FileServer(http.Dir("./ui/static/"))

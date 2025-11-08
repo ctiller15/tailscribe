@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/ctiller15/tailscribe/internal/database"
@@ -50,14 +51,16 @@ func NewEnvVars() *EnvVars {
 }
 
 type APIConfig struct {
-	Env EnvVars
-	Db  database.Queries
+	Env    EnvVars
+	Db     database.Queries
+	Logger *slog.Logger
 }
 
-func NewAPIConfig(env *EnvVars, db *database.Queries) *APIConfig {
+func NewAPIConfig(env *EnvVars, db *database.Queries, logger *slog.Logger) *APIConfig {
 	return &APIConfig{
-		Env: *env,
-		Db:  *db,
+		Env:    *env,
+		Db:     *db,
+		Logger: logger,
 	}
 }
 
