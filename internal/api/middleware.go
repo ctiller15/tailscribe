@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/ctiller15/tailscribe/internal/auth"
@@ -15,7 +14,7 @@ func (a *APIConfig) CheckAuthMiddleware(handler authorizedHandler) http.HandlerF
 		jwtCookie := r.CookiesNamed("token")
 
 		if len(jwtCookie) == 0 {
-			log.Printf("invalid request, user unauthorized, no token.")
+			a.Logger.Error("invalid request, user unauthorized, no token.")
 			// TODO: attempt to refresh before redirecting and potentially create a new token.
 			http.Redirect(w, r, "/login", http.StatusUnauthorized)
 			return
@@ -24,7 +23,7 @@ func (a *APIConfig) CheckAuthMiddleware(handler authorizedHandler) http.HandlerF
 		tokenString := jwtCookie[0].Value
 		user_id, err := auth.ValidateJWT(tokenString, a.Env.Secret)
 		if err != nil {
-			log.Printf("invalid request, user token invalid")
+			a.Logger.Error("invalid request, user token invalid")
 			http.Redirect(w, r, "/login", http.StatusUnauthorized)
 			return
 		}

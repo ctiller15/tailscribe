@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -24,6 +25,8 @@ var (
 	TestEnvVars *EnvVars
 
 	DbQueries *database.Queries
+
+	TestLogger *slog.Logger
 )
 
 func teardown(ctx context.Context) {
@@ -53,7 +56,13 @@ func init() {
 
 	DbQueries = database.New(db)
 
+	TestLogger = slog.New(slog.NewTextHandler(os.Stdout, nil))
+
 	defer teardown(ctx)
+}
+
+func createConfig() *APIConfig {
+	return NewAPIConfig(TestEnvVars, DbQueries, TestLogger)
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -81,7 +90,7 @@ func signUserUp(email, password string) []*http.Cookie {
 	request, _ := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(formData.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response := httptest.NewRecorder()
-	apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+	apiCfg := createConfig()
 	apiCfg.HandlePostSignup(response, request)
 
 	result := response.Result()
@@ -93,7 +102,7 @@ func signUserUp(email, password string) []*http.Cookie {
 func TestGetIndex(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/", nil)
 	response := httptest.NewRecorder()
-	apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+	apiCfg := createConfig()
 	apiCfg.HandleIndex(response, request)
 
 	assert.Equal(t, response.Result().StatusCode, 200)
@@ -102,7 +111,7 @@ func TestGetIndex(t *testing.T) {
 func TestGetSignup(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/signup", nil)
 	response := httptest.NewRecorder()
-	apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+	apiCfg := createConfig()
 	apiCfg.HandleSignupPage(response, request)
 
 	assert.Equal(t, response.Result().StatusCode, 200)
@@ -111,14 +120,14 @@ func TestGetSignup(t *testing.T) {
 func TestHandlePostSignup(t *testing.T) {
 	t.Run("Happy path", func(t *testing.T) {
 		formData := url.Values{
-			"email":    {"testEmail@email.com"},
+			"email":    {randTestEmail()},
 			"password": {"password123"},
 		}
 
 		request, _ := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(formData.Encode()))
 		request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		response := httptest.NewRecorder()
-		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg := createConfig()
 		apiCfg.HandlePostSignup(response, request)
 
 		result := response.Result()
@@ -142,7 +151,7 @@ func TestHandlePostSignup(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(formData.Encode()))
 		request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		response := httptest.NewRecorder()
-		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg := createConfig()
 		apiCfg.HandlePostSignup(response, request)
 
 		assert.Equal(t, response.Result().StatusCode, 400)
@@ -159,7 +168,7 @@ func TestHandleLogout(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(formData.Encode()))
 		request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		response := httptest.NewRecorder()
-		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg := createConfig()
 		apiCfg.HandlePostSignup(response, request)
 
 		result := response.Result()
@@ -187,7 +196,7 @@ func TestHandleLogout(t *testing.T) {
 	})
 
 	t.Run("Successfully logs out even if not logged in", func(t *testing.T) {
-		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg := createConfig()
 
 		logoutRequest, _ := http.NewRequest(http.MethodPost, "/logout", strings.NewReader(""))
 		logoutRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -217,7 +226,7 @@ func TestHandlePostLogin(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodPost, "/signup", strings.NewReader(formData.Encode()))
 		request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		response := httptest.NewRecorder()
-		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg := createConfig()
 		apiCfg.HandlePostSignup(response, request)
 
 		result := response.Result()
@@ -232,8 +241,8 @@ func TestHandlePostLogin(t *testing.T) {
 		loginRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 		loginResponse := httptest.NewRecorder()
-		loginApiCfg := NewAPIConfig(TestEnvVars, DbQueries)
-		loginApiCfg.HandlePostLogin(loginResponse, loginRequest)
+		loginCfg := createConfig()
+		loginCfg.HandlePostLogin(loginResponse, loginRequest)
 
 		loginResult := loginResponse.Result()
 		assert.Equal(t, 302, loginResult.StatusCode)
@@ -257,8 +266,8 @@ func TestHandlePostLogin(t *testing.T) {
 		loginRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 		loginResponse := httptest.NewRecorder()
-		loginApiCfg := NewAPIConfig(TestEnvVars, DbQueries)
-		loginApiCfg.HandlePostLogin(loginResponse, loginRequest)
+		loginCfg := createConfig()
+		loginCfg.HandlePostLogin(loginResponse, loginRequest)
 
 		loginResult := loginResponse.Result()
 		assert.Equal(t, 401, loginResult.StatusCode)
@@ -274,7 +283,7 @@ func TestGetAddNewPethandler(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodGet, "/dashboard/add_new_pet", nil)
 		response := httptest.NewRecorder()
 
-		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg := createConfig()
 		apiCfg.CheckAuthMiddleware(
 			apiCfg.HandleGetAddNewPet,
 		)(response, request)
@@ -294,7 +303,7 @@ func TestGetAddNewPethandler(t *testing.T) {
 		request.AddCookie(&auth_cookie)
 
 		response := httptest.NewRecorder()
-		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg := createConfig()
 		apiCfg.CheckAuthMiddleware(
 			apiCfg.HandleGetAddNewPet,
 		)(response, request)
@@ -309,7 +318,7 @@ func TestHandlePostAddNewPet(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodGet, "/dashboard/add_new_pet", nil)
 
 		response := httptest.NewRecorder()
-		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg := createConfig()
 
 		apiCfg.CheckAuthMiddleware(
 			apiCfg.HandlePostAddNewPet,
@@ -335,7 +344,7 @@ func TestHandlePostAddNewPet(t *testing.T) {
 		request.AddCookie(&auth_cookie)
 
 		response := httptest.NewRecorder()
-		apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+		apiCfg := createConfig()
 
 		apiCfg.CheckAuthMiddleware(
 			apiCfg.HandlePostAddNewPet,
@@ -359,7 +368,7 @@ func TestGetAttributions(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/attributions", nil)
 	response := httptest.NewRecorder()
 
-	apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+	apiCfg := createConfig()
 	apiCfg.HandleAttributions(response, request)
 
 	assert.Equal(t, response.Result().StatusCode, 200)
@@ -369,7 +378,7 @@ func TestGetTerms(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/terms", nil)
 	response := httptest.NewRecorder()
 
-	apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+	apiCfg := createConfig()
 	apiCfg.HandleTerms(response, request)
 
 	assert.Equal(t, response.Result().StatusCode, 200)
@@ -379,7 +388,7 @@ func TestGetPrivacyPolicy(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/privacy", nil)
 	response := httptest.NewRecorder()
 
-	apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+	apiCfg := createConfig()
 	apiCfg.HandlePrivacyPolicy(response, request)
 
 	assert.Equal(t, response.Result().StatusCode, 200)
@@ -389,7 +398,7 @@ func TestGetContactUs(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/contact", nil)
 	response := httptest.NewRecorder()
 
-	apiCfg := NewAPIConfig(TestEnvVars, DbQueries)
+	apiCfg := createConfig()
 	apiCfg.HandleContactUs(response, request)
 
 	assert.Equal(t, response.Result().StatusCode, 200)

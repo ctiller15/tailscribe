@@ -2,8 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/ctiller15/tailscribe/internal/api"
@@ -15,9 +16,10 @@ import (
 
 func main() {
 	// Initialize environment
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	err := godotenv.Load()
 	if err != nil {
-		log.Printf("error loading .env file: %v.\n Proceeding without env file...", err)
+		logger.Warn("error loading .env file. \n Proceeding without env file...", slog.String("error", err.Error()))
 	}
 
 	envVars := api.NewEnvVars()
@@ -25,12 +27,13 @@ func main() {
 
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err.Error())
+		os.Exit(1)
 	}
 
 	dbQueries := database.New(db)
 
-	apiCfg := api.NewAPIConfig(envVars, dbQueries)
+	apiCfg := api.NewAPIConfig(envVars, dbQueries, logger)
 
 	// Initialize routing - break into own func first
 	fs := http.FileServer(http.Dir("./ui/static/"))
@@ -58,11 +61,9 @@ func main() {
 		ReadHeaderTimeout: 2 * time.Second,
 	}
 
-	log.Println("listening on", envVars.Addr)
+	logger.Info("listening on", slog.String("addr", envVars.Addr))
 
 	err = server.ListenAndServe()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	logger.Error(err.Error())
+	os.Exit(1)
 }
