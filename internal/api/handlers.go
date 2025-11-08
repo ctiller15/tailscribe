@@ -89,15 +89,12 @@ type NewPetPageData struct {
 func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/index.html",
-		"./templates/base.html",
+		"./templates/base.tmpl",
+		"./templates/nav.tmpl",
+		"./templates/index.tmpl",
 	))
 
-	data := BasePageData{
-		Title: "TailScribe",
-	}
-
-	err := tmpl.Execute(w, data)
+	err := tmpl.Execute(w, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,15 +103,12 @@ func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 func (a *APIConfig) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/signup.html",
-		"./templates/base.html",
+		"./templates/base.tmpl",
+		"./templates/nav.tmpl",
+		"./templates/signup.tmpl",
 	))
 
-	data := BasePageData{
-		Title: "TailScribe - Sign Up",
-	}
-
-	err := tmpl.Execute(w, data)
+	err := tmpl.Execute(w, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -127,14 +121,10 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		Password: r.FormValue("password"),
 	}
 
-	signupPageData := SignupPageData{
-		Title:      "TailScribe - Sign Up",
-		SignupForm: signupDetails,
-	}
-
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/signup.html",
-		"./templates/base.html",
+		"./templates/base.tmpl",
+		"./templates/nav.tmpl",
+		"./templates/signup.tmpl",
 	))
 
 	// Validate email.
@@ -143,7 +133,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		// Abstract this failure state into a function
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
-		err = tmpl.Execute(w, signupPageData)
+		err = tmpl.Execute(w, signupDetails)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -155,7 +145,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
-		err = tmpl.Execute(w, signupPageData)
+		err = tmpl.Execute(w, signupDetails)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -179,7 +169,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
-		err = tmpl.Execute(w, signupPageData)
+		err = tmpl.Execute(w, signupDetails)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -191,7 +181,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
-		err = tmpl.Execute(w, signupPageData)
+		err = tmpl.Execute(w, signupDetails)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -249,13 +239,12 @@ func RejectPostLogin(
 	w http.ResponseWriter,
 	tmpl *template.Template,
 	loginDetails *LoginForm,
-	loginPageData *LoginPageData,
 	status int) error {
 
 	loginDetails.Valid = false
 	w.WriteHeader(status)
 
-	err := tmpl.Execute(w, loginPageData)
+	err := tmpl.Execute(w, loginDetails)
 
 	return err
 }
@@ -267,14 +256,10 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 		Password: r.FormValue("password"),
 	}
 
-	loginPageData := LoginPageData{
-		Title:     "TailScribe - Log In",
-		LoginForm: loginDetails,
-	}
-
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/login.html",
-		"./templates/base.html",
+		"./templates/base.tmpl",
+		"./templates/nav.tmpl",
+		"./templates/login.tmpl",
 	))
 
 	email := sql.NullString{
@@ -284,7 +269,7 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 
 	user, err := a.Db.GetUserByEmail(ctx, email)
 	if err != nil {
-		err = RejectPostLogin(w, tmpl, &loginDetails, &loginPageData, http.StatusUnauthorized)
+		err = RejectPostLogin(w, tmpl, &loginDetails, http.StatusUnauthorized)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -294,7 +279,7 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 	valid := auth.CheckPasswordHash(loginDetails.Password, user.Password.String)
 
 	if !valid {
-		err = RejectPostLogin(w, tmpl, &loginDetails, &loginPageData, http.StatusUnauthorized)
+		err = RejectPostLogin(w, tmpl, &loginDetails, http.StatusUnauthorized)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -304,7 +289,7 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 	err = a.createAndAttachSessionCookies(&w, user)
 	if err != nil {
 		log.Fatal(err)
-		err = RejectPostLogin(w, tmpl, &loginDetails, &loginPageData, http.StatusInternalServerError)
+		err = RejectPostLogin(w, tmpl, &loginDetails, http.StatusInternalServerError)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -323,15 +308,12 @@ func (a *APIConfig) HandlePostLogout(w http.ResponseWriter, r *http.Request) {
 
 func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/attributions.html",
-		"./templates/base.html",
+		"./templates/base.tmpl",
+		"./templates/nav.tmpl",
+		"./templates/attributions.tmpl",
 	))
 
-	data := AttributionsPageData{
-		Title: "Attributions",
-	}
-
-	err := tmpl.Execute(w, data)
+	err := tmpl.Execute(w, nil)
 	// Instead of a log fatal, probably a generic 500 page.
 	if err != nil {
 		log.Fatal(err)
@@ -340,15 +322,12 @@ func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {
 
 func (a *APIConfig) HandleTerms(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/terms_and_conditions.html",
-		"./templates/base.html",
+		"./templates/base.tmpl",
+		"./templates/nav.tmpl",
+		"./templates/terms_and_conditions.tmpl",
 	))
 
-	data := TermsAndConditionsPageData{
-		Title: "Terms and Conditions",
-	}
-
-	err := tmpl.Execute(w, data)
+	err := tmpl.Execute(w, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -356,12 +335,12 @@ func (a *APIConfig) HandleTerms(w http.ResponseWriter, r *http.Request) {
 
 func (a *APIConfig) HandlePrivacyPolicy(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/privacy_policy.html",
-		"./templates/base.html",
+		"./templates/base.tmpl",
+		"./templates/nav.tmpl",
+		"./templates/privacy_policy.tmpl",
 	))
 
 	data := PrivacyPolicyPageData{
-		Title:        "Privacy Policy",
 		ContactEmail: a.Env.ContactEmail,
 	}
 
@@ -373,12 +352,12 @@ func (a *APIConfig) HandlePrivacyPolicy(w http.ResponseWriter, r *http.Request) 
 
 func (a *APIConfig) HandleContactUs(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/contact_us.html",
-		"./templates/base.html",
+		"./templates/base.tmpl",
+		"./templates/nav.tmpl",
+		"./templates/contact_us.tmpl",
 	))
 
 	data := ContactUsPageData{
-		Title:        "Contact Us",
 		ContactEmail: a.Env.ContactEmail,
 	}
 
@@ -390,15 +369,12 @@ func (a *APIConfig) HandleContactUs(w http.ResponseWriter, r *http.Request) {
 
 func (a *APIConfig) HandleGetAddNewPet(w http.ResponseWriter, r *http.Request, user_id int) {
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/new_pet.html",
-		"./templates/base.html",
+		"./templates/base.tmpl",
+		"./templates/nav.tmpl",
+		"./templates/new_pet.tmpl",
 	))
 
-	data := BasePageData{
-		Title: "Add New Pet",
-	}
-
-	err := tmpl.Execute(w, data)
+	err := tmpl.Execute(w, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
