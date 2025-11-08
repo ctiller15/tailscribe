@@ -64,6 +64,9 @@ docker buildx build --platform linux/amd64 -t tailscribe .
 # linux
 docker build -t tailscribe .
 
+# Start up the database
+docker-compose up animal-training-journal-db
+
 # run
 docker run --env-file=.env -p 8080:8080 tailscribe
 ```

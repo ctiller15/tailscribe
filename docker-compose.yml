@@ -11,7 +11,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ./postgres/local_data:/var/lib/postgresql/data
+      - ./.postgres/local_data:/var/lib/postgresql/data
   animal-training-journal-test-db:
     image: postgres:13.2
     container_name: animal_training_journal_db_test
@@ -23,7 +23,7 @@ services:
     ports:
       - 6432:5432
     volumes:
-      - ./postgres/test_data:/var/lib/postgresql/data
+      - ./.postgres/test_data:/var/lib/postgresql/data
   animal-training-journal-e2e-db-local:
     image: postgres:13.2
     container_name: animal_training_journal__e2e_db_test_local
