@@ -89,9 +89,9 @@ type NewPetPageData struct {
 func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/base.tmpl",
-		"./templates/nav.tmpl",
-		"./templates/index.tmpl",
+		"./ui/html/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
+		"./ui/html/pages/index.tmpl",
 	))
 
 	err := tmpl.Execute(w, nil)
@@ -103,9 +103,9 @@ func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 func (a *APIConfig) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/base.tmpl",
-		"./templates/nav.tmpl",
-		"./templates/signup.tmpl",
+		"./ui/html/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
+		"./ui/html/pages/signup.tmpl",
 	))
 
 	err := tmpl.Execute(w, nil)
@@ -122,9 +122,9 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/base.tmpl",
-		"./templates/nav.tmpl",
-		"./templates/signup.tmpl",
+		"./ui/html/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
+		"./ui/html/pages/signup.tmpl",
 	))
 
 	// Validate email.
@@ -257,9 +257,9 @@ func (a *APIConfig) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/base.tmpl",
-		"./templates/nav.tmpl",
-		"./templates/login.tmpl",
+		"./ui/html/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
+		"./ui/html/pages/login.tmpl",
 	))
 
 	email := sql.NullString{
@@ -308,9 +308,9 @@ func (a *APIConfig) HandlePostLogout(w http.ResponseWriter, r *http.Request) {
 
 func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/base.tmpl",
-		"./templates/nav.tmpl",
-		"./templates/attributions.tmpl",
+		"./ui/html/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
+		"./ui/html/pages/attributions.tmpl",
 	))
 
 	err := tmpl.Execute(w, nil)
@@ -322,9 +322,9 @@ func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {
 
 func (a *APIConfig) HandleTerms(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/base.tmpl",
-		"./templates/nav.tmpl",
-		"./templates/terms_and_conditions.tmpl",
+		"./ui/html/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
+		"./ui/html/pages/terms_and_conditions.tmpl",
 	))
 
 	err := tmpl.Execute(w, nil)
@@ -335,9 +335,9 @@ func (a *APIConfig) HandleTerms(w http.ResponseWriter, r *http.Request) {
 
 func (a *APIConfig) HandlePrivacyPolicy(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/base.tmpl",
-		"./templates/nav.tmpl",
-		"./templates/privacy_policy.tmpl",
+		"./ui/html/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
+		"./ui/html/pages/privacy_policy.tmpl",
 	))
 
 	data := PrivacyPolicyPageData{
@@ -352,9 +352,9 @@ func (a *APIConfig) HandlePrivacyPolicy(w http.ResponseWriter, r *http.Request) 
 
 func (a *APIConfig) HandleContactUs(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/base.tmpl",
-		"./templates/nav.tmpl",
-		"./templates/contact_us.tmpl",
+		"./ui/html/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
+		"./ui/html/pages/contact_us.tmpl",
 	))
 
 	data := ContactUsPageData{
@@ -369,9 +369,9 @@ func (a *APIConfig) HandleContactUs(w http.ResponseWriter, r *http.Request) {
 
 func (a *APIConfig) HandleGetAddNewPet(w http.ResponseWriter, r *http.Request, user_id int) {
 	tmpl := template.Must(template.ParseFiles(
-		"./templates/base.tmpl",
-		"./templates/nav.tmpl",
-		"./templates/new_pet.tmpl",
+		"./ui/html/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
+		"./ui/html/pages/new_pet.tmpl",
 	))
 
 	err := tmpl.Execute(w, nil)
