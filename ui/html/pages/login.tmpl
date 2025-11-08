@@ -1,18 +1,16 @@
 {{define "title"}}TailScribe - Log In"{{end}}
 
 {{define "main"}}
-<div class="vertical-stretch-container">
-    <div class="mdl-card mdl-shadow--2dp">
-        <h1>Welcome back!</h1>
+<div class="mdl-card mdl-shadow--2dp">
+    <h1>Welcome back!</h1>
 
-        <p>Log in to your account</p>
+    <p>Log in to your account</p>
 
-        <form method="POST" action="/signup">
-            <input name="email" />
-            <input name="password" />
+    <form method="POST" action="/login">
+        <input name="email" />
+        <input name="password" />
 
-            <button>Login</button>
-        </form>
-    </div>
+        <button>Login</button>
+    </form>
 </div>
 {{end}}

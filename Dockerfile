@@ -9,8 +9,7 @@ FROM alpine:latest
 
 WORKDIR /app
 COPY --from=build /app/tailscribe .
-COPY --from=build /app/ui/ ./ui/
-COPY --from=build /app/assets ./assets
+COPY --from=build /app/ui ./ui
 
 EXPOSE 8080
 

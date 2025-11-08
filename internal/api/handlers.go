@@ -94,7 +94,7 @@ func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 		"./ui/html/pages/index.tmpl",
 	))
 
-	err := tmpl.Execute(w, nil)
+	err := tmpl.ExecuteTemplate(w, "base", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,7 +108,7 @@ func (a *APIConfig) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
 		"./ui/html/pages/signup.tmpl",
 	))
 
-	err := tmpl.Execute(w, nil)
+	err := tmpl.ExecuteTemplate(w, "base", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -133,7 +133,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		// Abstract this failure state into a function
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
-		err = tmpl.Execute(w, signupDetails)
+		err := tmpl.ExecuteTemplate(w, "base", signupDetails)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -145,7 +145,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
-		err = tmpl.Execute(w, signupDetails)
+		err := tmpl.ExecuteTemplate(w, "base", signupDetails)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -169,7 +169,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
-		err = tmpl.Execute(w, signupDetails)
+		err := tmpl.ExecuteTemplate(w, "base", signupDetails)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -181,7 +181,7 @@ func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 		signupDetails.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
-		err = tmpl.Execute(w, signupDetails)
+		err := tmpl.ExecuteTemplate(w, "base", signupDetails)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -244,7 +244,7 @@ func RejectPostLogin(
 	loginDetails.Valid = false
 	w.WriteHeader(status)
 
-	err := tmpl.Execute(w, loginDetails)
+	err := tmpl.ExecuteTemplate(w, "base", loginDetails)
 
 	return err
 }
@@ -313,7 +313,7 @@ func (a *APIConfig) HandleAttributions(w http.ResponseWriter, r *http.Request) {
 		"./ui/html/pages/attributions.tmpl",
 	))
 
-	err := tmpl.Execute(w, nil)
+	err := tmpl.ExecuteTemplate(w, "base", nil)
 	// Instead of a log fatal, probably a generic 500 page.
 	if err != nil {
 		log.Fatal(err)
@@ -327,7 +327,7 @@ func (a *APIConfig) HandleTerms(w http.ResponseWriter, r *http.Request) {
 		"./ui/html/pages/terms_and_conditions.tmpl",
 	))
 
-	err := tmpl.Execute(w, nil)
+	err := tmpl.ExecuteTemplate(w, "base", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -344,7 +344,7 @@ func (a *APIConfig) HandlePrivacyPolicy(w http.ResponseWriter, r *http.Request) 
 		ContactEmail: a.Env.ContactEmail,
 	}
 
-	err := tmpl.Execute(w, data)
+	err := tmpl.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -361,7 +361,7 @@ func (a *APIConfig) HandleContactUs(w http.ResponseWriter, r *http.Request) {
 		ContactEmail: a.Env.ContactEmail,
 	}
 
-	err := tmpl.Execute(w, data)
+	err := tmpl.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -374,7 +374,7 @@ func (a *APIConfig) HandleGetAddNewPet(w http.ResponseWriter, r *http.Request, u
 		"./ui/html/pages/new_pet.tmpl",
 	))
 
-	err := tmpl.Execute(w, nil)
+	err := tmpl.ExecuteTemplate(w, "base", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -414,7 +414,7 @@ func (a *APIConfig) HandlePostAddNewPet(w http.ResponseWriter, r *http.Request, 
 		addNewPetPageData.Valid = false
 		w.WriteHeader(http.StatusBadRequest)
 
-		err = tmpl.Execute(w, addNewPetPageData)
+		err = tmpl.ExecuteTemplate(w, "base", addNewPetPageData)
 		if err != nil {
 			log.Printf("an error occurred: %v", err)
 		}

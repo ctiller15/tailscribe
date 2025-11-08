@@ -1,18 +1,16 @@
 {{ define "title"}}TailScribe - Sign Up{{end}}
 
 {{ define "main"}}
-<div class="vertical-stretch-container">
-    <div class="mdl-card mdl-shadow--2dp">
-        <h1>Welcome!</h1>
+<div class="mdl-card mdl-shadow--2dp">
+    <h1>Welcome!</h1>
 
-        <p>Let's make your account</p>
+    <p>Let's make your account</p>
 
-        <form method="POST" action="/signup">
-            <input name="email" />
-            <input name="password" />
+    <form method="POST" action="/signup">
+        <input name="email" />
+        <input name="password" />
 
-            <button>Get Started!</button>
-        </form>
-    </div>
+        <button>Get Started!</button>
+    </form>
 </div>
 {{ end }}
