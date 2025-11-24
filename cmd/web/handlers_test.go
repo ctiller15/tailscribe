@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"html/template"
+	"io"
 	"log"
 	"log/slog"
 	"math/rand"
@@ -32,44 +34,99 @@ var (
 	TemplateCache map[string]*template.Template
 )
 
-func teardown(ctx context.Context) {
-	DbQueries.DeleteUsers(ctx)
+func newTestDB(t *testing.T, ctx context.Context, envVars *EnvVars) *sql.DB {
+
+	dbUrl := envVars.Database.ConnectionString() + "?sslmode=disable"
+
+	db, err := sql.Open("postgres", dbUrl)
+	if err != nil {
+		db.Close()
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		defer db.Close()
+
+		teardown(ctx, db)
+	})
+
+	return db
 }
 
-func init() {
-	ctx := context.Background()
+func teardown(ctx context.Context, db *sql.DB) {
+	dbQueries := database.New(db)
+	dbQueries.DeleteUsers(ctx)
+}
+
+func newTestApplication(t *testing.T) *APIConfig {
+	ctx := t.Context()
 	if err := os.Chdir("../.."); err != nil {
 		panic(err)
 	}
 
 	err := godotenv.Load(".env.test")
 
+	testEnvVars := NewEnvVars()
+
 	if err != nil {
 		log.Printf("error loading .env file: %v.\n May experience degraded behavior during tests.\n", err)
 	}
 
-	TestEnvVars = NewEnvVars()
+	db := newTestDB(t, ctx, testEnvVars)
 
-	dbUrl := TestEnvVars.Database.ConnectionString() + "?sslmode=disable"
+	dbQueries := database.New(db)
 
-	db, err := sql.Open("postgres", dbUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
+	testLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	defer db.Close()
-
-	DbQueries = database.New(db)
-
-	TestLogger = slog.New(slog.NewTextHandler(os.Stdout, nil))
-
-	TemplateCache, err = newTemplateCache()
+	templateCache, err := newTemplateCache()
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	defer teardown(ctx)
+	return NewAPIConfig(testEnvVars, dbQueries, testLogger, templateCache)
+}
+
+type testServer struct {
+	*httptest.Server
+}
+
+func newTestServer(t *testing.T, h http.Handler) *testServer {
+	ts := httptest.NewServer(h)
+
+	return &testServer{ts}
+}
+
+type testResponse struct {
+	status  int
+	headers http.Header
+	cookies []*http.Cookie
+	body    string
+}
+
+func (ts *testServer) get(t *testing.T, urlPath string) testResponse {
+	req, err := http.NewRequest(http.MethodGet, ts.URL+urlPath, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := ts.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return testResponse{
+		status:  res.StatusCode,
+		headers: res.Header,
+		cookies: res.Cookies(),
+		body:    string(bytes.TrimSpace(body)),
+	}
 }
 
 func createConfig() *APIConfig {
@@ -111,21 +168,23 @@ func signUserUp(email, password string) []*http.Cookie {
 }
 
 func TestGetIndex(t *testing.T) {
-	request, _ := http.NewRequest(http.MethodGet, "/", nil)
-	response := httptest.NewRecorder()
-	apiCfg := createConfig()
-	apiCfg.HandleIndex(response, request)
+	app := newTestApplication(t)
 
-	assert.Equal(t, response.Result().StatusCode, 200)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	res := ts.get(t, "/")
+	assert.Equal(t, res.status, http.StatusOK)
 }
 
 func TestGetSignup(t *testing.T) {
-	request, _ := http.NewRequest(http.MethodGet, "/signup", nil)
-	response := httptest.NewRecorder()
-	apiCfg := createConfig()
-	apiCfg.HandleSignupPage(response, request)
+	app := newTestApplication(t)
 
-	assert.Equal(t, response.Result().StatusCode, 200)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	res := ts.get(t, "/signup")
+	assert.Equal(t, res.status, http.StatusOK)
 }
 
 func TestHandlePostSignup(t *testing.T) {
@@ -376,41 +435,41 @@ func TestHandlePostAddNewPet(t *testing.T) {
 
 // Unauthorized routes
 func TestGetAttributions(t *testing.T) {
-	request, _ := http.NewRequest(http.MethodGet, "/attributions", nil)
-	response := httptest.NewRecorder()
+	app := newTestApplication(t)
 
-	apiCfg := createConfig()
-	apiCfg.HandleAttributions(response, request)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
 
-	assert.Equal(t, response.Result().StatusCode, 200)
+	res := ts.get(t, "/attributions")
+	assert.Equal(t, res.status, http.StatusOK)
 }
 
 func TestGetTerms(t *testing.T) {
-	request, _ := http.NewRequest(http.MethodGet, "/terms", nil)
-	response := httptest.NewRecorder()
+	app := newTestApplication(t)
 
-	apiCfg := createConfig()
-	apiCfg.HandleTerms(response, request)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
 
-	assert.Equal(t, response.Result().StatusCode, 200)
+	res := ts.get(t, "/terms")
+	assert.Equal(t, res.status, http.StatusOK)
 }
 
 func TestGetPrivacyPolicy(t *testing.T) {
-	request, _ := http.NewRequest(http.MethodGet, "/privacy", nil)
-	response := httptest.NewRecorder()
+	app := newTestApplication(t)
 
-	apiCfg := createConfig()
-	apiCfg.HandlePrivacyPolicy(response, request)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
 
-	assert.Equal(t, response.Result().StatusCode, 200)
+	res := ts.get(t, "/privacy")
+	assert.Equal(t, res.status, http.StatusOK)
 }
 
 func TestGetContactUs(t *testing.T) {
-	request, _ := http.NewRequest(http.MethodGet, "/contact", nil)
-	response := httptest.NewRecorder()
+	app := newTestApplication(t)
 
-	apiCfg := createConfig()
-	apiCfg.HandleContactUs(response, request)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
 
-	assert.Equal(t, response.Result().StatusCode, 200)
+	res := ts.get(t, "/contact")
+	assert.Equal(t, res.status, http.StatusOK)
 }

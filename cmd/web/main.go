@@ -40,30 +40,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	apiCfg := NewAPIConfig(envVars, dbQueries, logger, templateCache)
+	app := NewAPIConfig(envVars, dbQueries, logger, templateCache)
 
-	// Initialize routing - break into own func first
-	fs := http.FileServer(http.Dir("./ui/static/"))
-
-	mux := http.NewServeMux()
-
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
-
-	middleware := apiCfg.logRequest
-
-	mux.HandleFunc("GET /{$}", middleware(apiCfg.HandleIndex))
-	mux.HandleFunc("GET /signup", middleware(apiCfg.HandleSignupPage))
-	mux.HandleFunc("POST /signup", middleware(apiCfg.HandlePostSignup))
-	mux.HandleFunc("POST /login", middleware(apiCfg.HandlePostLogin))
-	mux.HandleFunc("POST /logout", middleware(apiCfg.HandlePostLogout))
-	mux.HandleFunc("/attributions", middleware(apiCfg.HandleAttributions))
-	mux.HandleFunc("/terms", middleware(apiCfg.HandleTerms))
-	mux.HandleFunc("/privacy", middleware(apiCfg.HandlePrivacyPolicy))
-	mux.HandleFunc("/contact", middleware(apiCfg.HandleContactUs))
-
-	authMiddleware := func(next authorizedHandler) http.HandlerFunc { return middleware(apiCfg.CheckAuthMiddleware(next)) }
-
-	mux.Handle("GET /dashboard/add_new_pet", authMiddleware(apiCfg.HandleGetAddNewPet))
+	mux := app.routes()
 
 	// Start server
 	server := http.Server{
