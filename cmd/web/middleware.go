@@ -1,10 +1,27 @@
-package api
+package main
 
 import (
 	"net/http"
 
 	"github.com/ctiller15/tailscribe/internal/auth"
 )
+
+type baseHandler func(w http.ResponseWriter, r *http.Request)
+
+func (a *APIConfig) logRequest(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var (
+			ip     = r.RemoteAddr
+			proto  = r.Proto
+			method = r.Method
+			uri    = r.URL.RequestURI()
+		)
+
+		a.Logger.Info("received request", "ip", ip, "proto", proto, "method", method, "uri", uri)
+
+		next(w, r)
+	})
+}
 
 type authorizedHandler func(w http.ResponseWriter, r *http.Request, userID int)
 

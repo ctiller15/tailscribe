@@ -1,8 +1,9 @@
-package api
+package main
 
 import (
 	"context"
 	"database/sql"
+	"html/template"
 	"log"
 	"log/slog"
 	"math/rand"
@@ -27,6 +28,8 @@ var (
 	DbQueries *database.Queries
 
 	TestLogger *slog.Logger
+
+	TemplateCache map[string]*template.Template
 )
 
 func teardown(ctx context.Context) {
@@ -54,15 +57,23 @@ func init() {
 		log.Fatal(err)
 	}
 
+	defer db.Close()
+
 	DbQueries = database.New(db)
 
 	TestLogger = slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	TemplateCache, err = newTemplateCache()
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	defer teardown(ctx)
 }
 
 func createConfig() *APIConfig {
-	return NewAPIConfig(TestEnvVars, DbQueries, TestLogger)
+	return NewAPIConfig(TestEnvVars, DbQueries, TestLogger, TemplateCache)
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

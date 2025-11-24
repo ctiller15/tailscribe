@@ -18,7 +18,7 @@ cp .env.example .env
 docker-compose up -d
 
 # start server
-go run main.go
+go run ./cmd/web main.go
 ```
 
 ### Running the tests

@@ -1,7 +1,8 @@
-package api
+package main
 
 import (
 	"fmt"
+	"html/template"
 	"log/slog"
 	"os"
 
@@ -51,16 +52,22 @@ func NewEnvVars() *EnvVars {
 }
 
 type APIConfig struct {
-	Env    EnvVars
-	Db     database.Queries
-	Logger *slog.Logger
+	Env           EnvVars
+	Db            database.Queries
+	Logger        *slog.Logger
+	TemplateCache map[string]*template.Template
 }
 
-func NewAPIConfig(env *EnvVars, db *database.Queries, logger *slog.Logger) *APIConfig {
+func NewAPIConfig(
+	env *EnvVars,
+	db *database.Queries,
+	logger *slog.Logger,
+	templateCache map[string]*template.Template) *APIConfig {
 	return &APIConfig{
-		Env:    *env,
-		Db:     *db,
-		Logger: logger,
+		Env:           *env,
+		Db:            *db,
+		Logger:        logger,
+		TemplateCache: templateCache,
 	}
 }
 

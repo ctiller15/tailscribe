@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"database/sql"
@@ -15,15 +15,6 @@ import (
 	"github.com/imagekit-developer/imagekit-go/v2" // imported as imagekit
 	"github.com/imagekit-developer/imagekit-go/v2/option"
 )
-
-type BasePageData struct {
-	Title string
-}
-
-// Probably some sort of abstraction here. I'll figure it out eventually.
-type IndexPageData struct {
-	BasePageData
-}
 
 type SignupForm struct {
 	Email    string
@@ -87,18 +78,9 @@ type NewPetPageData struct {
 }
 
 func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
+	data := a.newTemplateData()
 
-	tmpl := template.Must(template.ParseFiles(
-		"./ui/html/base.tmpl",
-		"./ui/html/partials/nav.tmpl",
-		"./ui/html/pages/index.tmpl",
-	))
-
-	err := tmpl.ExecuteTemplate(w, "base", nil)
-	if err != nil {
-		a.Logger.Error(err.Error())
-		return
-	}
+	a.render(w, r, http.StatusOK, "index.tmpl", data)
 }
 
 func (a *APIConfig) HandleSignupPage(w http.ResponseWriter, r *http.Request) {

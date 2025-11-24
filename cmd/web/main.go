@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ctiller15/tailscribe/internal/api"
 	"github.com/ctiller15/tailscribe/internal/database"
 	"github.com/joho/godotenv"
 
@@ -22,7 +21,7 @@ func main() {
 		logger.Warn("error loading .env file. \n Proceeding without env file...", slog.String("error", err.Error()))
 	}
 
-	envVars := api.NewEnvVars()
+	envVars := NewEnvVars()
 	dbUrl := envVars.Database.ConnectionString()
 
 	db, err := sql.Open("postgres", dbUrl)
@@ -31,9 +30,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	defer db.Close()
+
 	dbQueries := database.New(db)
 
-	apiCfg := api.NewAPIConfig(envVars, dbQueries, logger)
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	apiCfg := NewAPIConfig(envVars, dbQueries, logger, templateCache)
 
 	// Initialize routing - break into own func first
 	fs := http.FileServer(http.Dir("./ui/static/"))
@@ -42,17 +49,21 @@ func main() {
 
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	mux.HandleFunc("GET /{$}", apiCfg.HandleIndex)
-	mux.HandleFunc("GET /signup", apiCfg.HandleSignupPage)
-	mux.HandleFunc("POST /signup", apiCfg.HandlePostSignup)
-	mux.HandleFunc("POST /login", apiCfg.HandlePostLogin)
-	mux.HandleFunc("POST /logout", apiCfg.HandlePostLogout)
-	mux.HandleFunc("/attributions", apiCfg.HandleAttributions)
-	mux.HandleFunc("/terms", apiCfg.HandleTerms)
-	mux.HandleFunc("/privacy", apiCfg.HandlePrivacyPolicy)
-	mux.HandleFunc("/contact", apiCfg.HandleContactUs)
+	middleware := apiCfg.logRequest
 
-	mux.Handle("GET /dashboard/add_new_pet", apiCfg.CheckAuthMiddleware(apiCfg.HandleGetAddNewPet))
+	mux.HandleFunc("GET /{$}", middleware(apiCfg.HandleIndex))
+	mux.HandleFunc("GET /signup", middleware(apiCfg.HandleSignupPage))
+	mux.HandleFunc("POST /signup", middleware(apiCfg.HandlePostSignup))
+	mux.HandleFunc("POST /login", middleware(apiCfg.HandlePostLogin))
+	mux.HandleFunc("POST /logout", middleware(apiCfg.HandlePostLogout))
+	mux.HandleFunc("/attributions", middleware(apiCfg.HandleAttributions))
+	mux.HandleFunc("/terms", middleware(apiCfg.HandleTerms))
+	mux.HandleFunc("/privacy", middleware(apiCfg.HandlePrivacyPolicy))
+	mux.HandleFunc("/contact", middleware(apiCfg.HandleContactUs))
+
+	authMiddleware := func(next authorizedHandler) http.HandlerFunc { return middleware(apiCfg.CheckAuthMiddleware(next)) }
+
+	mux.Handle("GET /dashboard/add_new_pet", authMiddleware(apiCfg.HandleGetAddNewPet))
 
 	// Start server
 	server := http.Server{

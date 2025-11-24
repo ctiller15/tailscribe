@@ -3,7 +3,7 @@ FROM golang:1.24-alpine AS build
 WORKDIR /app
 COPY . .
 RUN go mod download
-RUN go build -o /app/tailscribe
+RUN cd ./cmd/web && go build . -o /app/tailscribe
 
 FROM alpine:latest
 
