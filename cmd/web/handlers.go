@@ -84,18 +84,9 @@ func (a *APIConfig) HandleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *APIConfig) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
+	data := a.newTemplateData()
 
-	tmpl := template.Must(template.ParseFiles(
-		"./ui/html/base.tmpl",
-		"./ui/html/partials/nav.tmpl",
-		"./ui/html/pages/signup.tmpl",
-	))
-
-	err := tmpl.ExecuteTemplate(w, "base", nil)
-	if err != nil {
-		a.Logger.Error(err.Error())
-		return
-	}
+	a.render(w, r, http.StatusOK, "signup.tmpl", data)
 }
 
 func (a *APIConfig) HandlePostSignup(w http.ResponseWriter, r *http.Request) {

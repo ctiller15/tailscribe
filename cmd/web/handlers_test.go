@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/ctiller15/tailscribe/internal/database"
-	"github.com/joho/godotenv"
+	"github.com/ctiller15/tailscribe/internal/env"
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/lib/pq"
@@ -60,17 +60,20 @@ func teardown(ctx context.Context, db *sql.DB) {
 
 func newTestApplication(t *testing.T) *APIConfig {
 	ctx := t.Context()
-	if err := os.Chdir("../.."); err != nil {
-		panic(err)
-	}
+	// cwd, err := os.Getwd()
+	// t.Log(err)
+	// t.Log(cwd)
+	// if err := os.Chdir("../.."); err != nil {
+	// 	panic(err)
+	// }
 
-	err := godotenv.Load(".env.test")
-
-	testEnvVars := NewEnvVars()
+	err := env.Load("/.env.test")
 
 	if err != nil {
 		log.Printf("error loading .env file: %v.\n May experience degraded behavior during tests.\n", err)
 	}
+
+	testEnvVars := NewEnvVars()
 
 	db := newTestDB(t, ctx, testEnvVars)
 

@@ -1,13 +1,15 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/ctiller15/tailscribe/ui"
+)
 
 func (app *APIConfig) routes() http.Handler {
-	fs := http.FileServer(http.Dir("./ui/static/"))
-
 	mux := http.NewServeMux()
 
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	mux.Handle("GET /static/", http.FileServerFS(ui.Files))
 
 	middleware := app.logRequest
 
